@@ -2,4 +2,4 @@
 VCF - viewer and editor
 
 
-nomsams.github.io/contactview
+https://nomsams.github.io/contactview
