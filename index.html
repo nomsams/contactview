@@ -44,13 +44,10 @@
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; transition: background 0.3s, color 0.3s; }
 
         /* --- Layout --- */
-        .sidebar { width: 260px; background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.5rem; z-index: 20; transition: width 0.3s ease; position: relative; }
-        .sidebar.collapsed { width: 80px; padding: 1.5rem 1rem; }
+        .sidebar { width: 220px; background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1rem; z-index: 20; transition: width 0.3s ease; position: relative; }
+        .sidebar.collapsed { width: 60px; padding: 1rem 0.5rem; }
         .sidebar.collapsed .logo span, 
-        .sidebar.collapsed .stat-label, 
-        .sidebar.collapsed .btn-text,
-        .sidebar.collapsed .footer-text { display: none; }
-        .sidebar.collapsed .stat-card { text-align: center; padding: 0.5rem; }
+        .sidebar.collapsed .sidebar-footer-content { display: none; }
         .sidebar.collapsed .logo { justify-content: center; }
         .sidebar.collapsed .btn { padding: 0.6rem; }
         
@@ -61,64 +58,89 @@
         
         /* --- Typography & Components --- */
         h1, h2, h3 { margin: 0; }
-        .logo { font-size: 1.25rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; white-space: nowrap; overflow: hidden; }
+        .logo { font-size: 1.1rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; white-space: nowrap; overflow: hidden; }
         .logo span { color: var(--text-main); }
         
-        .btn { cursor: pointer; border: none; padding: 0.6rem 1rem; border-radius: 8px; font-weight: 500; font-size: 0.875rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; justify-content: center; white-space: nowrap; }
+        .btn { cursor: pointer; border: none; padding: 0.5rem 0.8rem; border-radius: 6px; font-weight: 500; font-size: 0.8rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; justify-content: center; white-space: nowrap; }
         .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3); }
         .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
         .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
         .btn-secondary:hover { background: var(--bg-surface-hover); border-color: var(--text-muted); }
         .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
         .btn-danger:hover { background: var(--danger); color: white; }
-        .btn-icon { padding: 0.5rem; border-radius: 6px; }
+        .btn-icon { padding: 0.4rem; border-radius: 6px; }
 
         .badge { padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; background: var(--bg-surface-hover); color: var(--text-muted); }
 
-        /* --- Sidebar Stats --- */
-        .stat-card { background: var(--bg-body); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border); white-space: nowrap; overflow: hidden; }
-        .stat-value { font-size: 1.5rem; font-weight: 700; display: block; }
-        .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        /* --- Compact Sidebar Footer --- */
+        .sidebar-footer { margin-top: auto; border-top: 1px solid var(--border); padding-top: 1rem; }
+        .sidebar-stats-row { display: flex; justify-content: space-between; margin-bottom: 0.8rem; font-size: 0.7rem; color: var(--text-muted); }
+        .stat-item { display: flex; flex-direction: column; align-items: center; }
+        .stat-num { font-weight: 700; color: var(--text-main); font-size: 0.9rem; }
 
         /* --- Toolbar --- */
-        .toolbar { padding: 1rem 2rem; background: var(--glass); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 1rem; z-index: 10; }
-        .search-wrapper { position: relative; flex: 1; max-width: 400px; }
-        .search-wrapper input { width: 100%; padding: 0.6rem 1rem 0.6rem 2.5rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); }
-        .search-wrapper svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 16px; }
+        .toolbar { padding: 0.8rem 1.5rem; background: var(--glass); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 1rem; z-index: 10; height: 60px; }
+        .search-wrapper { position: relative; flex: 1; max-width: 350px; }
+        .search-wrapper input { width: 100%; padding: 0.5rem 1rem 0.5rem 2.2rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text-main); font-size: 0.9rem; }
+        .search-wrapper svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 14px; }
         
         /* --- Data Grid --- */
-        .table-wrapper { flex: 1; overflow: auto; padding: 0 2rem 2rem 2rem; }
+        .table-wrapper { flex: 1; overflow: auto; padding: 0 1.5rem 1.5rem 1.5rem; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 1rem; }
         thead { position: sticky; top: 0; z-index: 5; }
-        th { background: var(--bg-body); padding: 1rem; text-align: left; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; transition: color 0.2s; white-space: nowrap; }
+        th { background: var(--bg-body); padding: 0.8rem; text-align: left; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; transition: color 0.2s; white-space: nowrap; }
         th:hover { color: var(--primary); }
-        td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; background: var(--bg-surface); transition: background 0.2s; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+        td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); vertical-align: middle; background: var(--bg-surface); transition: background 0.2s; font-size: 0.9rem; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
         tr:hover td { background: var(--bg-surface-hover); }
         
         .clickable-cell { cursor: pointer; color: var(--primary); font-weight: 500; }
         .clickable-cell:hover { text-decoration: underline; }
 
+        /* Notes Cell */
+        .note-cell { 
+            white-space: normal; 
+            font-size: 0.75rem; 
+            color: var(--text-muted); 
+            line-height: 1.3;
+            max-width: 250px;
+            cursor: text;
+            position: relative;
+        }
+        .note-content {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 20px;
+        }
+        .note-cell:hover { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        
+        /* Inline Note Editor */
+        .inline-note-editor { display: flex; flex-direction: column; gap: 5px; position: absolute; top: 0; left: 0; right: 0; z-index: 10; background: var(--bg-surface); border: 1px solid var(--primary); padding: 5px; border-radius: 4px; box-shadow: var(--shadow); }
+        .inline-note-editor textarea { width: 100%; font-size: 0.8rem; font-family: inherit; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); resize: vertical; min-height: 60px; padding: 5px; }
+        .inline-actions { display: flex; justify-content: flex-end; gap: 5px; }
+        
         /* Avatar */
-        .avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: var(--bg-surface-hover); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; color: white; border: 2px solid var(--bg-body); flex-shrink: 0; }
-        .contact-info { display: flex; align-items: center; gap: 12px; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--bg-surface-hover); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.75rem; color: white; border: 2px solid var(--bg-body); flex-shrink: 0; }
+        .contact-info { display: flex; align-items: center; gap: 10px; }
         .contact-meta { display: flex; flex-direction: column; }
-        .meta-sub { font-size: 0.75rem; color: var(--text-muted); }
+        .meta-sub { font-size: 0.7rem; color: var(--text-muted); }
 
         /* Checkbox */
         .checkbox-wrapper { display: flex; align-items: center; justify-content: center; }
-        input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+        input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; accent-color: var(--primary); }
 
         /* --- Pagination --- */
-        .pagination { padding: 1rem 2rem; border-top: 1px solid var(--border); background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center; }
+        .pagination { padding: 0.8rem 1.5rem; border-top: 1px solid var(--border); background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
 
         /* --- Modals --- */
         .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .modal-backdrop.active { opacity: 1; pointer-events: all; }
         .modal { background: var(--bg-surface); width: 600px; max-width: 95%; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 90vh; transform: scale(0.95); transition: transform 0.2s; }
         .modal-backdrop.active .modal { transform: scale(1); }
-        .modal-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .modal-body { padding: 1.5rem; overflow-y: auto; }
-        .modal-footer { padding: 1.25rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-body); border-radius: 0 0 12px 12px; }
+        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-body); border-radius: 0 0 12px 12px; }
 
         /* Compact Edit Layout */
         .edit-header-layout { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; }
@@ -134,24 +156,21 @@
         .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); }
 
         /* Action Modal (QR) */
-        .action-modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding: 2rem; }
+        .action-modal-body { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 2rem; }
         .qr-container { background: white; padding: 1rem; border-radius: 8px; }
-        .action-tabs { display: flex; background: var(--bg-body); padding: 4px; border-radius: 8px; margin-bottom: 1rem; width: 100%; }
-        .action-tab { flex: 1; text-align: center; padding: 8px; cursor: pointer; border-radius: 6px; font-size: 0.9rem; font-weight: 500; color: var(--text-muted); transition: all 0.2s; }
+        .action-tabs { display: flex; gap: 5px; background: var(--bg-body); padding: 4px; border-radius: 8px; margin-bottom: 0.5rem; width: 100%; }
+        .action-tab { flex: 1; text-align: center; padding: 6px; cursor: pointer; border-radius: 6px; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); transition: all 0.2s; }
         .action-tab.active { background: var(--primary); color: white; }
-        .action-link { margin-top: 1rem; font-size: 1.2rem; color: var(--primary); text-decoration: none; font-weight: 600; }
-        .action-link:hover { text-decoration: underline; }
+        
+        .contact-summary { width: 100%; text-align: center; margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+        .summary-link { display: block; color: var(--primary); text-decoration: none; font-size: 0.95rem; margin-bottom: 0.5rem; }
+        .summary-link:hover { text-decoration: underline; }
+        .summary-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; }
 
         /* Context Menu */
         .context-menu { position: absolute; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 1000; min-width: 150px; padding: 5px; animation: fadeIn 0.1s ease-out; }
         .context-menu-item { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-radius: 4px; font-size: 0.9rem; color: var(--text-main); }
         .context-menu-item:hover { background: var(--bg-surface-hover); }
-        .context-menu-item input { pointer-events: none; }
-
-        /* --- Drag Drop --- */
-        #drop-zone { position: fixed; inset: 0; background: var(--primary); opacity: 0; pointer-events: none; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: opacity 0.3s; }
-        #drop-zone.active { opacity: 0.9; pointer-events: all; }
-        #drop-zone h2 { font-size: 3rem; margin-bottom: 1rem; }
 
         /* --- Utilities --- */
         .hidden { display: none !important; }
@@ -159,7 +178,7 @@
 
         /* Toast */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: var(--bg-surface); color: var(--text-main); padding: 1rem 1.5rem; border-radius: 8px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out; min-width: 300px; }
+        .toast { background: var(--bg-surface); color: var(--text-main); padding: 0.8rem 1.2rem; border-radius: 8px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out; min-width: 250px; font-size: 0.9rem; }
         .toast.error { border-left-color: var(--danger); }
         .toast.success { border-left-color: var(--success); }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -187,53 +206,34 @@
             <span>Nexus</span>
         </div>
 
-        <div class="stat-card">
-            <span class="stat-value" id="total-contacts">0</span>
-            <span class="stat-label">Contacts</span>
-        </div>
-        
-        <div class="stat-card">
-            <span class="stat-value" id="total-orgs">0</span>
-            <span class="stat-label">Organizations</span>
-        </div>
-
-        <div style="margin-top: auto;">
+        <div class="sidebar-footer">
+            <div class="sidebar-footer-content">
+                <div class="sidebar-stats-row">
+                    <div class="stat-item">
+                        <span class="stat-num" id="total-contacts">0</span>
+                        <span>Contacts</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-num" id="total-orgs">0</span>
+                        <span>Orgs</span>
+                    </div>
+                </div>
+            </div>
+            
             <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start;" id="theme-toggle">
-                <span id="theme-icon">🌙</span> <span class="btn-text">Toggle Theme</span>
+                <span id="theme-icon">🌙</span> <span class="sidebar-footer-content">Theme</span>
             </button>
-            <div class="footer-text" style="margin-top: 10px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
-                v2.1.0 Enterprise
+            <div class="sidebar-footer-content" style="margin-top: 10px; font-size: 0.6rem; color: var(--text-muted); text-align: center;">
+                v2.2.0 Enterprise
             </div>
         </div>
     </aside>
 
     <main class="main-content">
-        <div class="toolbar">
-            <div class="search-wrapper">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" id="search-input" placeholder="Search by name, phone, email...">
-            </div>
-            
-            <div style="display: flex; gap: 10px;">
-                <input type="file" id="file-input" accept=".vcf,.vcard" hidden>
-                <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                    Import VCF
-                </button>
-                <button class="btn btn-secondary" onclick="app.openModal()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    Add
-                </button>
-                <button class="btn btn-secondary" id="batch-actions-btn" onclick="app.toggleBatchMenu()" disabled>
-                    Batch Actions ▾
-                </button>
-            </div>
-        </div>
+        <div class="toolbar" id="toolbar"></div>
 
         <div id="batch-menu" class="hidden" style="position: absolute; top: 70px; right: 20px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 50; width: 220px;">
-            <button class="btn btn-secondary" style="width: 100%; border: none; justify-content: flex-start; border-radius: 8px 8px 0 0;" onclick="app.exportSelected()">📥 Export Selected</button>
-            <button class="btn btn-danger" style="width: 100%; border: none; justify-content: flex-start; border-radius: 0 0 8px 8px;" onclick="app.deleteSelected()">🗑️ Delete Selected</button>
-        </div>
+            </div>
 
         <div class="table-wrapper" id="table-container">
             <div class="empty-state" id="empty-state">
@@ -243,15 +243,13 @@
             </div>
             
             <table id="contact-table" class="hidden">
-                <thead id="table-head">
-                    </thead>
-                <tbody id="table-body">
-                    </tbody>
+                <thead id="table-head"></thead>
+                <tbody id="table-body"></tbody>
             </table>
         </div>
 
         <div class="pagination hidden" id="pagination-controls">
-            <span style="color: var(--text-muted); font-size: 0.9rem;">Showing <span id="page-info">0-0 of 0</span></span>
+            <span style="color: var(--text-muted);">Showing <span id="page-info">0-0 of 0</span></span>
             <div style="display: flex; gap: 5px;">
                 <button class="btn btn-secondary btn-icon" onclick="app.prevPage()">←</button>
                 <button class="btn btn-secondary btn-icon" onclick="app.nextPage()">→</button>
@@ -272,7 +270,7 @@
                 
                 <div class="edit-header-layout">
                     <div class="edit-avatar-section">
-                        <div id="edit-avatar-preview" class="avatar" style="width: 100px; height: 100px; font-size: 2.5rem; cursor: pointer;" title="Change Photo (Not Implemented)">?</div>
+                        <div id="edit-avatar-preview" class="avatar" style="width: 80px; height: 80px; font-size: 2rem; cursor: pointer;">?</div>
                     </div>
                     
                     <div class="edit-main-fields">
@@ -330,21 +328,29 @@
     </div>
 
     <div class="modal-backdrop" id="action-modal-overlay">
-        <div class="modal" style="width: 400px;">
+        <div class="modal" style="width: 380px;">
             <div class="modal-header">
                 <h3 id="action-title">Connect</h3>
                 <button class="btn btn-secondary btn-icon" onclick="app.closeActionModal()">✕</button>
             </div>
             <div class="action-modal-body">
-                <div class="action-tabs">
-                    <div class="action-tab active" id="tab-contact" onclick="app.switchActionTab('contact')">Contact</div>
-                    <div class="action-tab" id="tab-phone" onclick="app.switchActionTab('phone')">Number</div>
-                    <div class="action-tab" id="tab-email" onclick="app.switchActionTab('email')">Email</div>
-                </div>
+                <div class="action-tabs" id="action-tabs-container">
+                    </div>
                 
                 <div class="qr-container" id="qr-output"></div>
                 
-                <a href="#" id="action-href" class="action-link" target="_blank">Open Link</a>
+                <div id="contact-summary" class="contact-summary hidden">
+                    <div id="summary-phone-container">
+                        <div class="summary-label">Mobile</div>
+                        <a href="#" id="summary-phone" class="summary-link"></a>
+                    </div>
+                    <div id="summary-email-container" style="margin-top: 10px;">
+                        <div class="summary-label">Email</div>
+                        <a href="#" id="summary-email" class="summary-link"></a>
+                    </div>
+                </div>
+                
+                <a href="#" id="action-href" class="summary-link hidden" target="_blank" style="font-size: 1.2rem; margin-top: 1rem;">Open Link</a>
             </div>
         </div>
     </div>
@@ -353,114 +359,68 @@
 
 <script>
 /**
- * ------------------------------------------------------------------
  * UTILITIES
- * ------------------------------------------------------------------
  */
 const Utils = {
     generateId: () => crypto.randomUUID(),
-    
-    escapeHtml: (str) => {
-        if (!str) return '';
-        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    },
-
+    escapeHtml: (str) => (!str) ? '' : str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"),
     stringToColor: (str) => {
         let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        }
+        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
         const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
         return '#' + '00000'.substring(0, 6 - c.length) + c;
     },
-
     getInitials: (name) => {
         if (!name) return '?';
         const parts = name.trim().split(' ');
         if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     },
-
-    decodeQP: (str) => {
-        return str.replace(/=([A-Fa-f0-9]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16))).replace(/=\n/g, '');
-    },
-
-    // Strict Phone Standardization for SE
+    decodeQP: (str) => str.replace(/=([A-Fa-f0-9]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16))).replace(/=\n/g, ''),
     cleanPhoneNumber: (num) => {
         if (!num) return '';
-        // Remove spaces, hyphens, parens
         let clean = num.replace(/[\s\-\(\)]/g, '');
-        
-        // 1. If 0046... -> +46...
-        if (clean.startsWith('0046')) {
-            clean = '+' + clean.substring(2);
-        }
-        // 2. If +4607... -> +467...
-        if (clean.startsWith('+4607')) {
-            clean = '+467' + clean.substring(5);
-        }
-        // 3. If 07... and length is 10 digits -> +467...
-        if (/^07\d{8}$/.test(clean)) {
-            clean = '+46' + clean.substring(1);
-        }
-        
+        if (clean.startsWith('0046')) clean = '+' + clean.substring(2);
+        if (clean.startsWith('+4607')) clean = '+467' + clean.substring(5);
+        if (/^07\d{8}$/.test(clean)) clean = '+46' + clean.substring(1);
         return clean;
     }
 };
 
 /**
- * ------------------------------------------------------------------
- * VCARD PARSER ENGINE
- * ------------------------------------------------------------------
+ * VCARD PARSER
  */
 class VCardEngine {
     static parse(content) {
         const contacts = [];
         let normalized = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-        
         const lines = [];
         const rawLines = normalized.split('\n');
-        
         rawLines.forEach(line => {
             if (line.length === 0) return;
-            if ((line.startsWith(' ') || line.startsWith('\t')) && lines.length > 0) {
-                lines[lines.length - 1] += line.substring(1);
-            } else {
-                lines.push(line);
-            }
+            if ((line.startsWith(' ') || line.startsWith('\t')) && lines.length > 0) lines[lines.length - 1] += line.substring(1);
+            else lines.push(line);
         });
 
         let currentContact = null;
-
         lines.forEach(line => {
             if (line.startsWith('BEGIN:VCARD')) {
                 currentContact = {
-                    id: Utils.generateId(),
-                    fn: '', n: '', 
-                    tels: [], emails: [], 
-                    org: '', title: '', 
-                    adr: '', note: '', 
-                    photo: null,
-                    version: '3.0'
+                    id: Utils.generateId(), fn: '', n: '', tels: [], emails: [], org: '', title: '', adr: '', note: '', photo: null, version: '3.0'
                 };
             } else if (line.startsWith('END:VCARD')) {
                 if (currentContact) {
-                    if (!currentContact.fn && currentContact.n) {
-                        currentContact.fn = currentContact.n.replace(/;/g, ' ').trim();
-                    }
+                    if (!currentContact.fn && currentContact.n) currentContact.fn = currentContact.n.replace(/;/g, ' ').trim();
                     contacts.push(currentContact);
                     currentContact = null;
                 }
             } else if (currentContact) {
                 const colonIndex = line.indexOf(':');
                 if (colonIndex === -1) return;
-
                 let keyPart = line.substring(0, colonIndex);
                 let value = line.substring(colonIndex + 1);
-                
                 let [key, ...params] = keyPart.split(';');
                 key = key.toUpperCase().trim();
-
                 const isQP = params.some(p => p.toUpperCase().includes('QUOTED-PRINTABLE'));
                 if (isQP) value = Utils.decodeQP(value);
 
@@ -470,17 +430,9 @@ class VCardEngine {
                     case 'ORG': currentContact.org = value.replace(/;/g, ' '); break;
                     case 'TITLE': currentContact.title = value; break;
                     case 'NOTE': currentContact.note = value.replace(/\\n/g, '\n'); break;
-                    case 'EMAIL': 
-                        currentContact.emails.push({ value: value, type: this.extractType(params) });
-                        break;
-                    case 'TEL':
-                        // Clean phone number immediately on import
-                        currentContact.tels.push({ value: Utils.cleanPhoneNumber(value), type: this.extractType(params) });
-                        break;
-                    case 'ADR':
-                        const adrParts = value.split(';');
-                        currentContact.adr = adrParts.filter(p => p.trim()).join(', ');
-                        break;
+                    case 'EMAIL': currentContact.emails.push({ value: value, type: this.extractType(params) }); break;
+                    case 'TEL': currentContact.tels.push({ value: Utils.cleanPhoneNumber(value), type: this.extractType(params) }); break;
+                    case 'ADR': currentContact.adr = value.split(';').filter(p => p.trim()).join(', '); break;
                     case 'PHOTO':
                         const isBase64 = params.some(p => p.toUpperCase().includes('ENCODING=B') || p.toUpperCase().includes('BASE64'));
                         if (isBase64) {
@@ -495,20 +447,13 @@ class VCardEngine {
                 }
             }
         });
-
         return contacts;
     }
-
     static extractType(params) {
         const typeParam = params.find(p => p.toUpperCase().startsWith('TYPE='));
         if (typeParam) return typeParam.split('=')[1].toUpperCase();
-        const types = ['CELL', 'WORK', 'HOME', 'VOICE', 'FAX'];
-        for (let t of types) {
-            if (params.some(p => p.toUpperCase().includes(t))) return t;
-        }
-        return 'OTHER';
+        return ['CELL', 'WORK', 'HOME', 'VOICE', 'FAX'].find(t => params.some(p => p.toUpperCase().includes(t))) || 'OTHER';
     }
-
     static generate(contacts, single = false) {
         let vcf = '';
         const list = single ? [contacts] : contacts;
@@ -518,25 +463,15 @@ class VCardEngine {
             if (c.n) vcf += `N:${c.n}\n`;
             else {
                 const parts = c.fn.split(' ');
-                const last = parts.length > 1 ? parts.pop() : '';
-                const first = parts.join(' ');
-                vcf += `N:${last};${first};;;\n`;
+                vcf += `N:${parts.length > 1 ? parts.pop() : ''};${parts.join(' ')};;;\n`;
             }
-            
             if (c.org) vcf += `ORG:${c.org}\n`;
             if (c.title) vcf += `TITLE:${c.title}\n`;
             if (c.note) vcf += `NOTE:${c.note.replace(/\n/g, '\\n')}\n`;
             if (c.adr) vcf += `ADR;TYPE=HOME:;;${c.adr};;;;\n`;
-
             c.tels.forEach(t => vcf += `TEL;TYPE=${t.type || 'CELL'}:${t.value}\n`);
             c.emails.forEach(e => vcf += `EMAIL;TYPE=${e.type || 'INTERNET'}:${e.value}\n`);
-
-            // Include photo for file export, maybe exclude for QR if too big
-            if (c.photo && c.photo.startsWith('data:image')) {
-                const b64 = c.photo.split(',')[1];
-                vcf += `PHOTO;ENCODING=b;TYPE=JPEG:${b64}\n`;
-            }
-
+            if (c.photo && c.photo.startsWith('data:image')) vcf += `PHOTO;ENCODING=b;TYPE=JPEG:${c.photo.split(',')[1]}\n`;
             vcf += 'END:VCARD\n';
         });
         return vcf;
@@ -544,9 +479,7 @@ class VCardEngine {
 }
 
 /**
- * ------------------------------------------------------------------
  * APPLICATION LOGIC
- * ------------------------------------------------------------------
  */
 class App {
     constructor() {
@@ -554,6 +487,7 @@ class App {
             contacts: [],
             filteredContacts: [],
             selectedIds: new Set(),
+            isSelectionMode: false,
             sort: { key: 'fn', dir: 'asc' },
             pagination: { page: 1, limit: 50 },
             theme: localStorage.getItem('theme') || 'dark',
@@ -562,12 +496,13 @@ class App {
                 tel: { label: 'Phone', visible: true, locked: false },
                 email: { label: 'Email', visible: true, locked: false },
                 org: { label: 'Organization', visible: true, locked: false },
+                note: { label: 'Notes', visible: true, locked: false },
                 title: { label: 'Title', visible: false, locked: false },
                 adr: { label: 'Address', visible: false, locked: false }
             },
-            activeActionContact: null
+            activeActionContact: null,
+            editingNoteId: null // ID of contact currently having inline note edited
         };
-
         this.init();
     }
 
@@ -575,44 +510,30 @@ class App {
         this.applyTheme();
         this.setupEventListeners();
         this.render();
-        // Global click to close context menu
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('#column-context-menu')) {
-                document.getElementById('column-context-menu').classList.add('hidden');
+            if (!e.target.closest('#column-context-menu')) document.getElementById('column-context-menu').classList.add('hidden');
+            // Close inline note editor if clicked outside
+            if (!e.target.closest('.note-cell') && this.state.editingNoteId) {
+                this.cancelInlineEdit();
             }
         });
     }
 
     setupEventListeners() {
-        // File Upload
         document.getElementById('file-input').addEventListener('change', (e) => this.handleFile(e.target.files[0]));
-        
-        // Drag & Drop
         const dropZone = document.getElementById('drop-zone');
         window.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
         dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('active'); });
         dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('active');
+            e.preventDefault(); dropZone.classList.remove('active');
             if (e.dataTransfer.files.length) this.handleFile(e.dataTransfer.files[0]);
         });
-
-        // Search
         document.getElementById('search-input').addEventListener('input', (e) => this.handleSearch(e.target.value));
-
-        // Theme
         document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
-
-        // Context Menu trigger
         document.getElementById('contact-table').addEventListener('contextmenu', (e) => {
-            if (e.target.tagName === 'TH') {
-                e.preventDefault();
-                this.showColumnContextMenu(e.clientX, e.clientY);
-            }
+            if (e.target.tagName === 'TH') { e.preventDefault(); this.showColumnContextMenu(e.clientX, e.clientY); }
         });
     }
-
-    // --- Logic ---
 
     handleFile(file) {
         if (!file) return;
@@ -621,14 +542,10 @@ class App {
             try {
                 const newContacts = VCardEngine.parse(e.target.result);
                 if (newContacts.length === 0) throw new Error("No contacts found");
-                
                 this.state.contacts = [...this.state.contacts, ...newContacts];
-                this.showToast(`Successfully imported ${newContacts.length} contacts`, 'success');
+                this.showToast(`Imported ${newContacts.length} contacts`, 'success');
                 this.refreshData();
-            } catch (err) {
-                console.error(err);
-                this.showToast('Failed to parse VCF file. Ensure format is valid.', 'error');
-            }
+            } catch (err) { this.showToast('Failed to parse VCF', 'error'); }
         };
         reader.readAsText(file);
     }
@@ -636,26 +553,19 @@ class App {
     handleSearch(query) {
         const q = query.toLowerCase();
         this.state.pagination.page = 1;
-        
-        if (!q) {
-            this.state.filteredContacts = [...this.state.contacts];
-        } else {
-            this.state.filteredContacts = this.state.contacts.filter(c => {
-                const searchStr = `${c.fn} ${c.org} ${c.emails.map(e=>e.value).join(' ')} ${c.tels.map(t=>t.value).join(' ')}`.toLowerCase();
-                return searchStr.includes(q);
-            });
+        if (!q) this.state.filteredContacts = [...this.state.contacts];
+        else {
+            this.state.filteredContacts = this.state.contacts.filter(c => 
+                `${c.fn} ${c.org} ${c.emails.map(e=>e.value).join(' ')} ${c.tels.map(t=>t.value).join(' ')} ${c.note}`.toLowerCase().includes(q)
+            );
         }
         this.sortData();
         this.renderTable();
     }
 
     sort(key) {
-        if (this.state.sort.key === key) {
-            this.state.sort.dir = this.state.sort.dir === 'asc' ? 'desc' : 'asc';
-        } else {
-            this.state.sort.key = key;
-            this.state.sort.dir = 'asc';
-        }
+        if (this.state.sort.key === key) this.state.sort.dir = this.state.sort.dir === 'asc' ? 'desc' : 'asc';
+        else { this.state.sort.key = key; this.state.sort.dir = 'asc'; }
         this.sortData();
         this.renderTable();
     }
@@ -664,18 +574,9 @@ class App {
         const { key, dir } = this.state.sort;
         this.state.filteredContacts.sort((a, b) => {
             let valA = '', valB = '';
-            
-            if (key === 'tel') {
-                valA = a.tels[0]?.value || '';
-                valB = b.tels[0]?.value || '';
-            } else if (key === 'email') {
-                valA = a.emails[0]?.value || '';
-                valB = b.emails[0]?.value || '';
-            } else {
-                valA = (a[key] || '').toString();
-                valB = (b[key] || '').toString();
-            }
-
+            if (key === 'tel') { valA = a.tels[0]?.value || ''; valB = b.tels[0]?.value || ''; }
+            else if (key === 'email') { valA = a.emails[0]?.value || ''; valB = b.emails[0]?.value || ''; }
+            else { valA = (a[key] || '').toString(); valB = (b[key] || '').toString(); }
             return dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
         });
     }
@@ -687,15 +588,12 @@ class App {
         this.render();
     }
 
-    toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('collapsed');
-    }
+    toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
 
     // --- Columns Context Menu ---
     showColumnContextMenu(x, y) {
         const menu = document.getElementById('column-context-menu');
         menu.innerHTML = '';
-        
         Object.entries(this.state.columns).forEach(([key, col]) => {
             if (col.locked) return;
             const item = document.createElement('div');
@@ -705,69 +603,146 @@ class App {
                 e.stopPropagation();
                 this.state.columns[key].visible = !this.state.columns[key].visible;
                 this.renderTable();
-                this.showColumnContextMenu(x, y); // keep open or re-render
+                this.showColumnContextMenu(x, y); 
             };
             menu.appendChild(item);
         });
-
-        menu.style.left = x + 'px';
-        menu.style.top = y + 'px';
-        menu.classList.remove('hidden');
+        menu.style.left = x + 'px'; menu.style.top = y + 'px'; menu.classList.remove('hidden');
     }
 
-    // --- Batch Actions ---
+    // --- Selection Mode Logic ---
+    toggleSelectionMode(active) {
+        this.state.isSelectionMode = active;
+        if (!active) this.state.selectedIds.clear();
+        this.renderToolbar();
+        this.renderTable();
+        this.updateBatchMenu();
+    }
 
-    toggleSelectAll(checked) {
-        if (checked) {
-            this.state.filteredContacts.forEach(c => this.state.selectedIds.add(c.id));
-        } else {
+    toggleSelectAll() {
+        if (this.state.selectedIds.size === this.state.filteredContacts.length) {
             this.state.selectedIds.clear();
+        } else {
+            this.state.filteredContacts.forEach(c => this.state.selectedIds.add(c.id));
         }
         this.renderTable();
-        this.updateBatchUI();
+        this.updateBatchMenu();
     }
 
     toggleSelection(id) {
         if (this.state.selectedIds.has(id)) this.state.selectedIds.delete(id);
         else this.state.selectedIds.add(id);
-        this.updateBatchUI();
-    }
-
-    updateBatchUI() {
-        const btn = document.getElementById('batch-actions-btn');
-        const count = this.state.selectedIds.size;
-        btn.textContent = count > 0 ? `Batch Actions (${count}) ▾` : 'Batch Actions ▾';
-        btn.disabled = count === 0;
-        if (count === 0) document.getElementById('batch-menu').classList.add('hidden');
+        this.updateBatchMenu();
     }
 
     toggleBatchMenu() {
-        document.getElementById('batch-menu').classList.toggle('hidden');
+        const menu = document.getElementById('batch-menu');
+        menu.classList.toggle('hidden');
+        menu.innerHTML = '';
+        
+        // Permanent Action: Export All
+        const btnExportAll = document.createElement('button');
+        btnExportAll.className = 'btn btn-secondary';
+        btnExportAll.style.cssText = 'width: 100%; border: none; justify-content: flex-start; border-radius: 8px 8px 0 0;';
+        btnExportAll.textContent = `📥 Export All (${this.state.filteredContacts.length})`;
+        btnExportAll.onclick = () => this.exportAll();
+        menu.appendChild(btnExportAll);
+
+        // Selection Actions
+        if (this.state.isSelectionMode && this.state.selectedIds.size > 0) {
+            const btnExportSel = document.createElement('button');
+            btnExportSel.className = 'btn btn-secondary';
+            btnExportSel.style.cssText = 'width: 100%; border: none; justify-content: flex-start;';
+            btnExportSel.textContent = `📥 Export Selected (${this.state.selectedIds.size})`;
+            btnExportSel.onclick = () => this.exportSelected();
+            menu.appendChild(btnExportSel);
+
+            const btnDel = document.createElement('button');
+            btnDel.className = 'btn btn-danger';
+            btnDel.style.cssText = 'width: 100%; border: none; justify-content: flex-start; border-radius: 0 0 8px 8px;';
+            btnDel.textContent = `🗑️ Delete Selected (${this.state.selectedIds.size})`;
+            btnDel.onclick = () => this.deleteSelected();
+            menu.appendChild(btnDel);
+        } else {
+             btnExportAll.style.borderRadius = '8px'; // Round bottom if only item
+        }
+    }
+
+    updateBatchMenu() {
+        // Just refresh the batch menu button state if needed, actual menu renders on click
+        const btn = document.getElementById('batch-actions-btn');
+        // Always enabled now due to 'Export All'
+        btn.disabled = false;
+        if (this.state.isSelectionMode) {
+             btn.textContent = `Actions (${this.state.selectedIds.size}) ▾`;
+        } else {
+             btn.textContent = `Actions ▾`;
+        }
+        // If menu is open, refresh it
+        if (!document.getElementById('batch-menu').classList.contains('hidden')) {
+            this.toggleBatchMenu(); 
+            document.getElementById('batch-menu').classList.remove('hidden'); // keep it open
+        }
     }
 
     deleteSelected() {
         if (!confirm(`Delete ${this.state.selectedIds.size} contacts?`)) return;
         this.state.contacts = this.state.contacts.filter(c => !this.state.selectedIds.has(c.id));
         this.state.selectedIds.clear();
-        this.toggleBatchMenu();
+        this.toggleSelectionMode(false); // Exit select mode after delete
         this.refreshData();
         this.showToast('Contacts deleted', 'success');
+        document.getElementById('batch-menu').classList.add('hidden');
     }
 
     exportSelected() {
         const selected = this.state.contacts.filter(c => this.state.selectedIds.has(c.id));
         this.downloadVCF(selected);
-        this.toggleBatchMenu();
+        document.getElementById('batch-menu').classList.add('hidden');
     }
 
-    // --- Action Modal (QR & Href) ---
+    exportAll() {
+        // Export filtered list if search is active, otherwise all
+        this.downloadVCF(this.state.filteredContacts);
+        document.getElementById('batch-menu').classList.add('hidden');
+    }
 
+    // --- Inline Notes ---
+    startInlineEdit(id) {
+        if (this.state.editingNoteId) this.cancelInlineEdit(); // Close others
+        this.state.editingNoteId = id;
+        this.renderTable(); // Re-render to show editor
+        setTimeout(() => {
+            const txt = document.getElementById(`note-edit-${id}`);
+            if(txt) {
+                txt.focus();
+                txt.setSelectionRange(txt.value.length, txt.value.length);
+            }
+        }, 50);
+    }
+
+    saveInlineEdit(id) {
+        const val = document.getElementById(`note-edit-${id}`).value;
+        const c = this.state.contacts.find(x => x.id === id);
+        if (c) {
+            c.note = val;
+            this.showToast('Note updated', 'success');
+        }
+        this.cancelInlineEdit();
+    }
+
+    cancelInlineEdit() {
+        this.state.editingNoteId = null;
+        this.renderTable();
+    }
+
+    // --- Action Modal ---
     openActionModal(id, initialTab = 'contact') {
-        const contact = this.state.contacts.find(c => c.id === id);
-        if (!contact) return;
-        
-        this.state.activeActionContact = contact;
+        const c = this.state.contacts.find(x => x.id === id);
+        if (!c) return;
+        this.state.activeActionContact = c;
         document.getElementById('action-modal-overlay').classList.add('active');
+        this.renderActionTabs();
         this.switchActionTab(initialTab);
     }
 
@@ -776,59 +751,82 @@ class App {
         this.state.activeActionContact = null;
     }
 
-    switchActionTab(tab) {
-        document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
-        document.getElementById(`tab-${tab}`).classList.add('active');
-
+    renderActionTabs() {
         const c = this.state.activeActionContact;
-        const qrContainer = document.getElementById('qr-output');
-        const link = document.getElementById('action-href');
-        qrContainer.innerHTML = '';
-        link.classList.add('hidden');
-
-        let qrText = '';
+        const container = document.getElementById('action-tabs-container');
+        container.innerHTML = `<div class="action-tab" id="tab-contact" onclick="app.switchActionTab('contact')">Contact</div>`;
         
-        if (tab === 'contact') {
-            // Generate minimal VCF for QR (strip photo to save space)
-            const minimalC = { ...c, photo: null };
-            qrText = VCardEngine.generate(minimalC, true);
-            link.textContent = '';
-        } else if (tab === 'phone') {
-            const num = c.tels[0]?.value || '';
-            if (num) {
-                qrText = `tel:${num}`;
-                link.href = `tel:${num}`;
-                link.textContent = `Call ${num}`;
-                link.classList.remove('hidden');
-            } else {
-                qrContainer.innerHTML = '<p style="color:var(--text-muted)">No phone number available</p>';
-            }
-        } else if (tab === 'email') {
-            const mail = c.emails[0]?.value || '';
-            if (mail) {
-                qrText = `mailto:${mail}`;
-                link.href = `mailto:${mail}`;
-                link.textContent = `Email ${mail}`;
-                link.classList.remove('hidden');
-            } else {
-                qrContainer.innerHTML = '<p style="color:var(--text-muted)">No email available</p>';
-            }
+        if (c.tels.length > 0) {
+            container.innerHTML += `<div class="action-tab" id="tab-phone" onclick="app.switchActionTab('phone')">Number</div>`;
         }
-
-        if (qrText) {
-            new QRCode(qrContainer, {
-                text: qrText,
-                width: 200,
-                height: 200,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.L
-            });
+        if (c.emails.length > 0) {
+            container.innerHTML += `<div class="action-tab" id="tab-email" onclick="app.switchActionTab('email')">Email</div>`;
         }
     }
 
-    // --- CRUD & Edit Modal ---
+    switchActionTab(tab) {
+        document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
+        const tabEl = document.getElementById(`tab-${tab}`);
+        if(tabEl) tabEl.classList.add('active');
+        else {
+             // Fallback if tab doesn't exist (e.g. no email), go to contact
+             this.switchActionTab('contact');
+             return;
+        }
 
+        const c = this.state.activeActionContact;
+        const qrContainer = document.getElementById('qr-output');
+        const summary = document.getElementById('contact-summary');
+        const link = document.getElementById('action-href');
+        
+        qrContainer.innerHTML = '';
+        summary.classList.add('hidden');
+        link.classList.add('hidden');
+        
+        let qrText = '';
+
+        if (tab === 'contact') {
+            const minimalC = { ...c, photo: null }; // smaller payload
+            qrText = VCardEngine.generate(minimalC, true);
+            
+            summary.classList.remove('hidden');
+            const phone = c.tels[0]?.value || '';
+            const email = c.emails[0]?.value || '';
+            
+            if (phone) {
+                document.getElementById('summary-phone-container').classList.remove('hidden');
+                const linkP = document.getElementById('summary-phone');
+                linkP.textContent = phone;
+                linkP.href = `tel:${phone}`;
+            } else document.getElementById('summary-phone-container').classList.add('hidden');
+
+            if (email) {
+                document.getElementById('summary-email-container').classList.remove('hidden');
+                const linkE = document.getElementById('summary-email');
+                linkE.textContent = email;
+                linkE.href = `mailto:${email}`;
+            } else document.getElementById('summary-email-container').classList.add('hidden');
+
+        } else if (tab === 'phone') {
+            const num = c.tels[0]?.value;
+            qrText = `tel:${num}`;
+            link.href = `tel:${num}`;
+            link.textContent = `Call ${num}`;
+            link.classList.remove('hidden');
+        } else if (tab === 'email') {
+            const mail = c.emails[0]?.value;
+            qrText = `mailto:${mail}`;
+            link.href = `mailto:${mail}`;
+            link.textContent = `Email ${mail}`;
+            link.classList.remove('hidden');
+        }
+
+        if (qrText) {
+            new QRCode(qrContainer, { text: qrText, width: 200, height: 200, correctLevel : QRCode.CorrectLevel.L });
+        }
+    }
+
+    // --- CRUD ---
     deleteContact(id) {
         if (confirm('Delete this contact?')) {
             this.state.contacts = this.state.contacts.filter(c => c.id !== id);
@@ -840,7 +838,6 @@ class App {
     openModal(id = null) {
         const modal = document.getElementById('modal-overlay');
         const title = document.getElementById('modal-title');
-        
         document.querySelectorAll('.modal input, .modal textarea').forEach(i => i.value = '');
         document.getElementById('edit-avatar-preview').innerHTML = '?';
         document.getElementById('edit-avatar-preview').style.backgroundImage = 'none';
@@ -849,14 +846,12 @@ class App {
         if (id) {
             const c = this.state.contacts.find(x => x.id === id);
             if (!c) return;
-            
             title.textContent = 'Edit Contact';
             document.getElementById('edit-id').value = c.id;
             
             const nameParts = (c.fn || '').split(' ');
             document.getElementById('edit-fn-last').value = nameParts.length > 1 ? nameParts.pop() : '';
             document.getElementById('edit-fn-first').value = nameParts.join(' ');
-
             document.getElementById('edit-org').value = c.org || '';
             document.getElementById('edit-title').value = c.title || '';
             document.getElementById('edit-adr').value = c.adr || '';
@@ -867,7 +862,6 @@ class App {
             const work = c.tels.find(t => t.type === 'WORK');
             if (cell) document.getElementById('edit-tel-cell').value = cell.value;
             if (work) document.getElementById('edit-tel-work').value = work.value;
-
             if (c.emails.length) document.getElementById('edit-email').value = c.emails[0].value;
 
             if (c.photo) {
@@ -877,44 +871,29 @@ class App {
                 document.getElementById('edit-avatar-preview').style.backgroundColor = Utils.stringToColor(c.fn || 'Unknown');
                 document.getElementById('edit-avatar-preview').innerHTML = Utils.getInitials(c.fn);
             }
-
         } else {
             title.textContent = 'New Contact';
             document.getElementById('edit-id').value = '';
         }
-        
         modal.classList.add('active');
     }
 
-    closeModal() {
-        document.getElementById('modal-overlay').classList.remove('active');
-    }
-
-    updateCharCount(textarea) {
-        const count = textarea.value.length;
-        document.getElementById('note-counter').textContent = `${count}/1000`;
-    }
+    closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
+    updateCharCount(textarea) { document.getElementById('note-counter').textContent = `${textarea.value.length}/1000`; }
 
     saveContact() {
         const id = document.getElementById('edit-id').value;
-        constfirst = document.getElementById('edit-fn-first').value.trim();
+        const first = document.getElementById('edit-fn-first').value.trim();
         const last = document.getElementById('edit-fn-last').value.trim();
         const fn = `${first} ${last}`.trim();
-        
         if (!fn) return this.showToast('Name is required', 'error');
 
         const contactData = {
-            fn: fn,
-            n: `${last};${first};;;`,
-            org: document.getElementById('edit-org').value,
-            title: document.getElementById('edit-title').value,
-            adr: document.getElementById('edit-adr').value,
-            note: document.getElementById('edit-note').value,
-            tels: [],
-            emails: []
+            fn: fn, n: `${last};${first};;;`, org: document.getElementById('edit-org').value,
+            title: document.getElementById('edit-title').value, adr: document.getElementById('edit-adr').value,
+            note: document.getElementById('edit-note').value, tels: [], emails: []
         };
 
-        // Apply Cleaning Logic Here
         const cell = Utils.cleanPhoneNumber(document.getElementById('edit-tel-cell').value);
         const work = Utils.cleanPhoneNumber(document.getElementById('edit-tel-work').value);
         const email = document.getElementById('edit-email').value;
@@ -935,14 +914,12 @@ class App {
             contactData.photo = null;
             this.state.contacts.unshift(contactData);
         }
-
         this.closeModal();
         this.refreshData();
         this.showToast('Contact saved', 'success');
     }
 
     // --- Rendering ---
-
     render() {
         document.getElementById('total-contacts').textContent = this.state.contacts.length;
         const orgs = new Set(this.state.contacts.map(c => c.org).filter(Boolean));
@@ -952,104 +929,141 @@ class App {
         document.getElementById('empty-state').classList.toggle('hidden', hasContacts);
         document.getElementById('contact-table').classList.toggle('hidden', !hasContacts);
         document.getElementById('pagination-controls').classList.toggle('hidden', !hasContacts);
-
+        
+        this.renderToolbar();
         if (hasContacts) this.renderTable();
+    }
+
+    renderToolbar() {
+        const t = document.getElementById('toolbar');
+        let html = `
+            <div class="search-wrapper">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="search-input" placeholder="Search contacts..." value="${document.getElementById('search-input')?.value || ''}">
+            </div>
+            <div style="display: flex; gap: 8px;">
+        `;
+        
+        if (this.state.isSelectionMode) {
+             html += `
+                <button class="btn btn-primary" onclick="app.toggleSelectAll()">Select All</button>
+                <button class="btn btn-secondary" onclick="app.toggleSelectionMode(false)">Stop Select</button>
+             `;
+        } else {
+             html += `
+                <input type="file" id="file-input" accept=".vcf,.vcard" hidden>
+                <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">Import</button>
+                <button class="btn btn-secondary" onclick="app.openModal()">Add</button>
+                <button class="btn btn-secondary" onclick="app.toggleSelectionMode(true)">Select</button>
+             `;
+        }
+
+        html += `
+                <button class="btn btn-secondary" id="batch-actions-btn" onclick="app.toggleBatchMenu()">
+                    ${this.state.isSelectionMode && this.state.selectedIds.size > 0 ? `Actions (${this.state.selectedIds.size})` : 'Actions'} ▾
+                </button>
+            </div>
+        `;
+        t.innerHTML = html;
+        // Re-attach search listener
+        document.getElementById('search-input').addEventListener('input', (e) => this.handleSearch(e.target.value));
     }
 
     renderTable() {
         const thead = document.getElementById('table-head');
         const tbody = document.getElementById('table-body');
         
-        // Render Headers dynamically based on visible columns
-        let headerHTML = `<tr><th style="width: 40px;"><div class="checkbox-wrapper"><input type="checkbox" id="select-all"></div></th>`;
+        // Headers
+        let headerHTML = `<tr>`;
+        if (this.state.isSelectionMode) {
+             headerHTML += `<th style="width: 40px;">✓</th>`;
+        }
         Object.entries(this.state.columns).forEach(([key, col]) => {
-            if (col.visible) {
-                headerHTML += `<th onclick="app.sort('${key}')">${col.label} ↕</th>`;
-            }
+            if (col.visible) headerHTML += `<th onclick="app.sort('${key}')">${col.label} ↕</th>`;
         });
         headerHTML += `<th style="text-align: right;">Actions</th></tr>`;
         thead.innerHTML = headerHTML;
         
-        // Re-attach Select All listener
-        document.getElementById('select-all').addEventListener('change', (e) => this.toggleSelectAll(e.target.checked));
-
-        // Render Body
+        // Body
         tbody.innerHTML = '';
         const { page, limit } = this.state.pagination;
         const start = (page - 1) * limit;
         const end = start + limit;
         const pageData = this.state.filteredContacts.slice(start, end);
-
         document.getElementById('page-info').textContent = `${Math.min(start + 1, this.state.filteredContacts.length)}-${Math.min(end, this.state.filteredContacts.length)} of ${this.state.filteredContacts.length}`;
 
         pageData.forEach(c => {
             const tr = document.createElement('tr');
-            tr.ondblclick = () => this.openModal(c.id); // Double click to edit
-            const isSelected = this.state.selectedIds.has(c.id);
             
             let avatarHtml = '';
-            if (c.photo) {
-                avatarHtml = `<img src="${c.photo}" class="avatar">`;
-            } else {
+            if (c.photo) avatarHtml = `<img src="${c.photo}" class="avatar">`;
+            else {
                 const color = Utils.stringToColor(c.fn || 'Unknown');
-                const initials = Utils.getInitials(c.fn);
-                avatarHtml = `<div class="avatar" style="background:${color}">${initials}</div>`;
+                avatarHtml = `<div class="avatar" style="background:${color}">${Utils.getInitials(c.fn)}</div>`;
             }
 
-            let rowHTML = `<td><div class="checkbox-wrapper"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="app.toggleSelection('${c.id}')"></div></td>`;
+            let rowHTML = '';
+            
+            // Checkbox column only in Selection Mode
+            if (this.state.isSelectionMode) {
+                const isSelected = this.state.selectedIds.has(c.id);
+                rowHTML += `<td><div class="checkbox-wrapper"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="app.toggleSelection('${c.id}')"></div></td>`;
+            }
 
             if (this.state.columns.fn.visible) {
-                rowHTML += `
-                <td>
-                    <div class="contact-info">
-                        ${avatarHtml}
-                        <div class="contact-meta">
-                            <span style="font-weight:500">${Utils.escapeHtml(c.fn)}</span>
-                            ${c.title ? `<span class="meta-sub">${Utils.escapeHtml(c.title)}</span>` : ''}
-                        </div>
-                    </div>
-                </td>`;
+                rowHTML += `<td><div class="contact-info">${avatarHtml}<div class="contact-meta"><span style="font-weight:500">${Utils.escapeHtml(c.fn)}</span>${c.title ? `<span class="meta-sub">${Utils.escapeHtml(c.title)}</span>` : ''}</div></div></td>`;
             }
-
             if (this.state.columns.tel.visible) {
-                const phone = c.tels.length ? c.tels[0].value : '';
-                rowHTML += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'phone')">${Utils.escapeHtml(phone)}</td>`;
+                rowHTML += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'phone')">${Utils.escapeHtml(c.tels[0]?.value || '')}</td>`;
             }
-
             if (this.state.columns.email.visible) {
-                const email = c.emails.length ? c.emails[0].value : '';
-                rowHTML += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'email')">${Utils.escapeHtml(email)}</td>`;
+                rowHTML += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'email')">${Utils.escapeHtml(c.emails[0]?.value || '')}</td>`;
             }
-
             if (this.state.columns.org.visible) {
                 rowHTML += `<td>${c.org ? `<span class="tag">${Utils.escapeHtml(c.org)}</span>` : ''}</td>`;
             }
-            if (this.state.columns.title.visible) {
-                rowHTML += `<td>${Utils.escapeHtml(c.title || '')}</td>`;
+            if (this.state.columns.note.visible) {
+                if (this.state.editingNoteId === c.id) {
+                    rowHTML += `
+                        <td class="note-cell">
+                            <div class="inline-note-editor" onclick="event.stopPropagation()">
+                                <textarea id="note-edit-${c.id}">${Utils.escapeHtml(c.note || '')}</textarea>
+                                <div class="inline-actions">
+                                    <button class="btn btn-secondary btn-icon" style="padding: 2px 6px; font-size: 0.7rem;" onclick="app.cancelInlineEdit()">✕</button>
+                                    <button class="btn btn-primary btn-icon" style="padding: 2px 6px; font-size: 0.7rem;" onclick="app.saveInlineEdit('${c.id}')">Save</button>
+                                </div>
+                            </div>
+                        </td>`;
+                } else {
+                    rowHTML += `
+                        <td class="note-cell" onclick="app.startInlineEdit('${c.id}')">
+                            <div class="note-content">${Utils.escapeHtml(c.note || '') || '<span style="opacity:0.3">Add note...</span>'}</div>
+                        </td>`;
+                }
             }
-            if (this.state.columns.adr.visible) {
-                rowHTML += `<td>${Utils.escapeHtml(c.adr || '')}</td>`;
-            }
+            if (this.state.columns.title.visible) rowHTML += `<td>${Utils.escapeHtml(c.title || '')}</td>`;
+            if (this.state.columns.adr.visible) rowHTML += `<td>${Utils.escapeHtml(c.adr || '')}</td>`;
 
-            rowHTML += `
-                <td style="text-align: right;">
+            rowHTML += `<td style="text-align: right;">
                     <button class="btn btn-secondary btn-icon" onclick="app.openModal('${c.id}')" title="Edit">✏️</button>
-                    <button class="btn btn-danger btn-icon" onclick="app.deleteContact('${c.id}')" title="Delete">🗑️</button>
-                </td>
-            `;
+                    ${!this.state.isSelectionMode ? `<button class="btn btn-danger btn-icon" onclick="app.deleteContact('${c.id}')" title="Delete">🗑️</button>` : ''}
+                </td>`;
+            
             tr.innerHTML = rowHTML;
+            tr.ondblclick = (e) => {
+                // Prevent modal opening if clicking note editor
+                if (!e.target.closest('.inline-note-editor')) app.openModal(c.id);
+            };
             tbody.appendChild(tr);
         });
     }
 
     nextPage() {
-        const maxPage = Math.ceil(this.state.filteredContacts.length / this.state.pagination.limit);
-        if (this.state.pagination.page < maxPage) {
+        if (this.state.pagination.page < Math.ceil(this.state.filteredContacts.length / this.state.pagination.limit)) {
             this.state.pagination.page++;
             this.renderTable();
         }
     }
-
     prevPage() {
         if (this.state.pagination.page > 1) {
             this.state.pagination.page--;
@@ -1057,58 +1071,30 @@ class App {
         }
     }
 
-    // --- Export ---
-
     downloadVCF(contacts) {
         if (contacts.length === 0) return;
         const vcfContent = VCardEngine.generate(contacts);
         const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8' });
-        
-        // Formatting Filename: Nexus_Contacts_YYYY-MM-DD_HH-mm_Qty-X.vcf
         const now = new Date();
-        const dateStr = now.toISOString().slice(0,10);
-        const timeStr = now.toTimeString().slice(0,5).replace(':','-');
-        const filename = `Nexus_Contacts_${dateStr}_${timeStr}_Qty-${contacts.length}.vcf`;
-
+        const filename = `Nexus_Contacts_${now.toISOString().slice(0,10)}_${now.toTimeString().slice(0,5).replace(':','-')}_Qty-${contacts.length}.vcf`;
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(url);
         this.showToast('Export started', 'success');
     }
 
-    // --- Theme ---
-    applyTheme() {
-        document.documentElement.setAttribute('data-theme', this.state.theme);
-        localStorage.setItem('theme', this.state.theme);
-        document.getElementById('theme-icon').textContent = this.state.theme === 'dark' ? '🌙' : '☀️';
-    }
-
-    toggleTheme() {
-        this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark';
-        this.applyTheme();
-    }
-
+    applyTheme() { document.documentElement.setAttribute('data-theme', this.state.theme); localStorage.setItem('theme', this.state.theme); document.getElementById('theme-icon').textContent = this.state.theme === 'dark' ? '🌙' : '☀️'; }
+    toggleTheme() { this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark'; this.applyTheme(); }
     showToast(msg, type = 'info') {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `<span>${msg}</span>`;
-        container.appendChild(toast);
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
+        const c = document.getElementById('toast-container'); const t = document.createElement('div');
+        t.className = `toast ${type}`; t.innerHTML = `<span>${msg}</span>`; c.appendChild(t);
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
     }
 }
 
-// Initialize
 const app = new App();
-
 </script>
 </body>
 </html>
