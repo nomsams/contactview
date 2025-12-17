@@ -6,6 +6,8 @@
     <title>Nexus Contact Manager | Enterprise Edition</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <style>
         :root {
             /* Core Palette */
@@ -42,15 +44,27 @@
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; transition: background 0.3s, color 0.3s; }
 
         /* --- Layout --- */
-        .sidebar { width: 260px; background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.5rem; z-index: 20; }
+        .sidebar { width: 260px; background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.5rem; z-index: 20; transition: width 0.3s ease; position: relative; }
+        .sidebar.collapsed { width: 80px; padding: 1.5rem 1rem; }
+        .sidebar.collapsed .logo span, 
+        .sidebar.collapsed .stat-label, 
+        .sidebar.collapsed .btn-text,
+        .sidebar.collapsed .footer-text { display: none; }
+        .sidebar.collapsed .stat-card { text-align: center; padding: 0.5rem; }
+        .sidebar.collapsed .logo { justify-content: center; }
+        .sidebar.collapsed .btn { padding: 0.6rem; }
+        
+        .sidebar-toggle { position: absolute; top: 50%; right: -12px; transform: translateY(-50%); width: 24px; height: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); z-index: 30; box-shadow: var(--shadow); }
+        .sidebar-toggle:hover { color: var(--primary); }
+
         .main-content { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
         
         /* --- Typography & Components --- */
         h1, h2, h3 { margin: 0; }
-        .logo { font-size: 1.25rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+        .logo { font-size: 1.25rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; white-space: nowrap; overflow: hidden; }
         .logo span { color: var(--text-main); }
         
-        .btn { cursor: pointer; border: none; padding: 0.6rem 1rem; border-radius: 8px; font-weight: 500; font-size: 0.875rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+        .btn { cursor: pointer; border: none; padding: 0.6rem 1rem; border-radius: 8px; font-weight: 500; font-size: 0.875rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; justify-content: center; white-space: nowrap; }
         .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3); }
         .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
         .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
@@ -60,10 +74,9 @@
         .btn-icon { padding: 0.5rem; border-radius: 6px; }
 
         .badge { padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; background: var(--bg-surface-hover); color: var(--text-muted); }
-        .badge.active { background: var(--primary); color: white; }
 
         /* --- Sidebar Stats --- */
-        .stat-card { background: var(--bg-body); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border); }
+        .stat-card { background: var(--bg-body); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border); white-space: nowrap; overflow: hidden; }
         .stat-value { font-size: 1.5rem; font-weight: 700; display: block; }
         .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
@@ -77,13 +90,16 @@
         .table-wrapper { flex: 1; overflow: auto; padding: 0 2rem 2rem 2rem; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 1rem; }
         thead { position: sticky; top: 0; z-index: 5; }
-        th { background: var(--bg-body); padding: 1rem; text-align: left; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; transition: color 0.2s; }
+        th { background: var(--bg-body); padding: 1rem; text-align: left; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; transition: color 0.2s; white-space: nowrap; }
         th:hover { color: var(--primary); }
-        td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; background: var(--bg-surface); transition: background 0.2s; }
+        td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; background: var(--bg-surface); transition: background 0.2s; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
         tr:hover td { background: var(--bg-surface-hover); }
         
+        .clickable-cell { cursor: pointer; color: var(--primary); font-weight: 500; }
+        .clickable-cell:hover { text-decoration: underline; }
+
         /* Avatar */
-        .avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: var(--bg-surface-hover); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; color: white; border: 2px solid var(--bg-body); }
+        .avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: var(--bg-surface-hover); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; color: white; border: 2px solid var(--bg-body); flex-shrink: 0; }
         .contact-info { display: flex; align-items: center; gap: 12px; }
         .contact-meta { display: flex; flex-direction: column; }
         .meta-sub { font-size: 0.75rem; color: var(--text-muted); }
@@ -100,16 +116,37 @@
         .modal-backdrop.active { opacity: 1; pointer-events: all; }
         .modal { background: var(--bg-surface); width: 600px; max-width: 95%; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 90vh; transform: scale(0.95); transition: transform 0.2s; }
         .modal-backdrop.active .modal { transform: scale(1); }
-        .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .modal-body { padding: 1.5rem; overflow-y: auto; }
-        .modal-footer { padding: 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-body); border-radius: 0 0 12px 12px; }
+        .modal-footer { padding: 1.25rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-body); border-radius: 0 0 12px 12px; }
 
+        /* Compact Edit Layout */
+        .edit-header-layout { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .edit-avatar-section { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .edit-main-fields { flex: 1; display: flex; flex-direction: column; gap: 0.8rem; }
+        .char-counter { font-size: 0.7rem; color: var(--text-muted); text-align: right; display: block; margin-top: 4px; }
+        
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .form-group { margin-bottom: 1rem; }
+        .form-group { margin-bottom: 0; }
         .form-group.full { grid-column: span 2; }
-        .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 500; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.7rem; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; font-family: inherit; transition: border-color 0.2s; }
-        .form-group input:focus { border-color: var(--primary); }
+        .form-group label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.6rem; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; font-family: inherit; transition: border-color 0.2s; font-size: 0.9rem; }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); }
+
+        /* Action Modal (QR) */
+        .action-modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding: 2rem; }
+        .qr-container { background: white; padding: 1rem; border-radius: 8px; }
+        .action-tabs { display: flex; background: var(--bg-body); padding: 4px; border-radius: 8px; margin-bottom: 1rem; width: 100%; }
+        .action-tab { flex: 1; text-align: center; padding: 8px; cursor: pointer; border-radius: 6px; font-size: 0.9rem; font-weight: 500; color: var(--text-muted); transition: all 0.2s; }
+        .action-tab.active { background: var(--primary); color: white; }
+        .action-link { margin-top: 1rem; font-size: 1.2rem; color: var(--primary); text-decoration: none; font-weight: 600; }
+        .action-link:hover { text-decoration: underline; }
+
+        /* Context Menu */
+        .context-menu { position: absolute; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 1000; min-width: 150px; padding: 5px; animation: fadeIn 0.1s ease-out; }
+        .context-menu-item { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-radius: 4px; font-size: 0.9rem; color: var(--text-main); }
+        .context-menu-item:hover { background: var(--bg-surface-hover); }
+        .context-menu-item input { pointer-events: none; }
 
         /* --- Drag Drop --- */
         #drop-zone { position: fixed; inset: 0; background: var(--primary); opacity: 0; pointer-events: none; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: opacity 0.3s; }
@@ -118,7 +155,6 @@
 
         /* --- Utilities --- */
         .hidden { display: none !important; }
-        .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; display: block; }
         .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; background: var(--bg-body); border: 1px solid var(--border); font-size: 0.7rem; margin-right: 4px; }
 
         /* Toast */
@@ -136,14 +172,16 @@
 </head>
 <body>
 
-    <!-- Drag Drop Overlay -->
     <div id="drop-zone">
         <h2>📂</h2>
         <h3>Drop VCF file to import</h3>
     </div>
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-toggle" onclick="app.toggleSidebar()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </div>
+
         <div class="logo">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             <span>Nexus</span>
@@ -151,7 +189,7 @@
 
         <div class="stat-card">
             <span class="stat-value" id="total-contacts">0</span>
-            <span class="stat-label">Total Contacts</span>
+            <span class="stat-label">Contacts</span>
         </div>
         
         <div class="stat-card">
@@ -161,17 +199,15 @@
 
         <div style="margin-top: auto;">
             <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start;" id="theme-toggle">
-                <span id="theme-icon">🌙</span> Toggle Theme
+                <span id="theme-icon">🌙</span> <span class="btn-text">Toggle Theme</span>
             </button>
-            <div style="margin-top: 10px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
-                v2.0.0 Enterprise
+            <div class="footer-text" style="margin-top: 10px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
+                v2.1.0 Enterprise
             </div>
         </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="main-content">
-        <!-- Toolbar -->
         <div class="toolbar">
             <div class="search-wrapper">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -194,13 +230,11 @@
             </div>
         </div>
 
-        <!-- Batch Menu (Hidden by default) -->
-        <div id="batch-menu" class="hidden" style="position: absolute; top: 70px; right: 20px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 50; width: 200px;">
+        <div id="batch-menu" class="hidden" style="position: absolute; top: 70px; right: 20px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 50; width: 220px;">
             <button class="btn btn-secondary" style="width: 100%; border: none; justify-content: flex-start; border-radius: 8px 8px 0 0;" onclick="app.exportSelected()">📥 Export Selected</button>
             <button class="btn btn-danger" style="width: 100%; border: none; justify-content: flex-start; border-radius: 0 0 8px 8px;" onclick="app.deleteSelected()">🗑️ Delete Selected</button>
         </div>
 
-        <!-- Table Area -->
         <div class="table-wrapper" id="table-container">
             <div class="empty-state" id="empty-state">
                 <div class="empty-icon">📇</div>
@@ -209,23 +243,13 @@
             </div>
             
             <table id="contact-table" class="hidden">
-                <thead>
-                    <tr>
-                        <th style="width: 40px;"><div class="checkbox-wrapper"><input type="checkbox" id="select-all"></div></th>
-                        <th onclick="app.sort('fn')">Name ↕</th>
-                        <th onclick="app.sort('tel')">Phone ↕</th>
-                        <th onclick="app.sort('email')">Email ↕</th>
-                        <th onclick="app.sort('org')">Organization ↕</th>
-                        <th style="text-align: right;">Actions</th>
-                    </tr>
-                </thead>
+                <thead id="table-head">
+                    </thead>
                 <tbody id="table-body">
-                    <!-- Rows injected via JS -->
-                </tbody>
+                    </tbody>
             </table>
         </div>
 
-        <!-- Pagination -->
         <div class="pagination hidden" id="pagination-controls">
             <span style="color: var(--text-muted); font-size: 0.9rem;">Showing <span id="page-info">0-0 of 0</span></span>
             <div style="display: flex; gap: 5px;">
@@ -235,7 +259,8 @@
         </div>
     </main>
 
-    <!-- Modal -->
+    <div id="column-context-menu" class="context-menu hidden"></div>
+
     <div class="modal-backdrop" id="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -244,34 +269,45 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="edit-id">
+                
+                <div class="edit-header-layout">
+                    <div class="edit-avatar-section">
+                        <div id="edit-avatar-preview" class="avatar" style="width: 100px; height: 100px; font-size: 2.5rem; cursor: pointer;" title="Change Photo (Not Implemented)">?</div>
+                    </div>
+                    
+                    <div class="edit-main-fields">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>First Name</label>
+                                <input type="text" id="edit-fn-first">
+                            </div>
+                            <div class="form-group">
+                                <label>Last Name</label>
+                                <input type="text" id="edit-fn-last">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Mobile Phone</label>
+                            <input type="text" id="edit-tel-cell" placeholder="+46...">
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="edit-email">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group full" style="margin-bottom: 1rem;">
+                    <label>Notes</label>
+                    <textarea id="edit-note" rows="3" maxlength="1000" oninput="app.updateCharCount(this)"></textarea>
+                    <span class="char-counter" id="note-counter">0/1000</span>
+                </div>
+
                 <div class="form-grid">
-                    <div class="form-group full" style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
-                        <div id="edit-avatar-preview" class="avatar" style="width: 80px; height: 80px; font-size: 2rem;">?</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>First Name</label>
-                        <input type="text" id="edit-fn-first">
-                    </div>
-                    <div class="form-group">
-                        <label>Last Name</label>
-                        <input type="text" id="edit-fn-last">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Mobile Phone</label>
-                        <input type="text" id="edit-tel-cell">
-                    </div>
                     <div class="form-group">
                         <label>Work Phone</label>
                         <input type="text" id="edit-tel-work">
                     </div>
-
-                    <div class="form-group full">
-                        <label>Email Address</label>
-                        <input type="email" id="edit-email">
-                    </div>
-
                     <div class="form-group">
                         <label>Organization</label>
                         <input type="text" id="edit-org">
@@ -280,21 +316,35 @@
                         <label>Job Title</label>
                         <input type="text" id="edit-title">
                     </div>
-
                     <div class="form-group full">
                         <label>Address</label>
                         <input type="text" id="edit-adr">
-                    </div>
-                    
-                    <div class="form-group full">
-                        <label>Notes</label>
-                        <textarea id="edit-note" rows="3"></textarea>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="app.closeModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="app.saveContact()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="action-modal-overlay">
+        <div class="modal" style="width: 400px;">
+            <div class="modal-header">
+                <h3 id="action-title">Connect</h3>
+                <button class="btn btn-secondary btn-icon" onclick="app.closeActionModal()">✕</button>
+            </div>
+            <div class="action-modal-body">
+                <div class="action-tabs">
+                    <div class="action-tab active" id="tab-contact" onclick="app.switchActionTab('contact')">Contact</div>
+                    <div class="action-tab" id="tab-phone" onclick="app.switchActionTab('phone')">Number</div>
+                    <div class="action-tab" id="tab-email" onclick="app.switchActionTab('email')">Email</div>
+                </div>
+                
+                <div class="qr-container" id="qr-output"></div>
+                
+                <a href="#" id="action-href" class="action-link" target="_blank">Open Link</a>
             </div>
         </div>
     </div>
@@ -315,7 +365,6 @@ const Utils = {
         return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
     },
 
-    // Generate a consistent color from a string
     stringToColor: (str) => {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
@@ -332,25 +381,43 @@ const Utils = {
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     },
 
-    // Decode Quoted-Printable
     decodeQP: (str) => {
         return str.replace(/=([A-Fa-f0-9]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16))).replace(/=\n/g, '');
+    },
+
+    // Strict Phone Standardization for SE
+    cleanPhoneNumber: (num) => {
+        if (!num) return '';
+        // Remove spaces, hyphens, parens
+        let clean = num.replace(/[\s\-\(\)]/g, '');
+        
+        // 1. If 0046... -> +46...
+        if (clean.startsWith('0046')) {
+            clean = '+' + clean.substring(2);
+        }
+        // 2. If +4607... -> +467...
+        if (clean.startsWith('+4607')) {
+            clean = '+467' + clean.substring(5);
+        }
+        // 3. If 07... and length is 10 digits -> +467...
+        if (/^07\d{8}$/.test(clean)) {
+            clean = '+46' + clean.substring(1);
+        }
+        
+        return clean;
     }
 };
 
 /**
  * ------------------------------------------------------------------
- * VCARD PARSER ENGINE (Robust State Machine)
+ * VCARD PARSER ENGINE
  * ------------------------------------------------------------------
  */
 class VCardEngine {
     static parse(content) {
         const contacts = [];
-        // Normalize line endings
         let normalized = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         
-        // Unfold lines (lines starting with space/tab are continuations)
-        // We do this carefully to not break base64 blobs
         const lines = [];
         const rawLines = normalized.split('\n');
         
@@ -378,7 +445,6 @@ class VCardEngine {
                 };
             } else if (line.startsWith('END:VCARD')) {
                 if (currentContact) {
-                    // Post-process name if FN is missing
                     if (!currentContact.fn && currentContact.n) {
                         currentContact.fn = currentContact.n.replace(/;/g, ' ').trim();
                     }
@@ -386,7 +452,6 @@ class VCardEngine {
                     currentContact = null;
                 }
             } else if (currentContact) {
-                // Parse Key:Value
                 const colonIndex = line.indexOf(':');
                 if (colonIndex === -1) return;
 
@@ -396,11 +461,9 @@ class VCardEngine {
                 let [key, ...params] = keyPart.split(';');
                 key = key.toUpperCase().trim();
 
-                // Decode QP if needed
                 const isQP = params.some(p => p.toUpperCase().includes('QUOTED-PRINTABLE'));
                 if (isQP) value = Utils.decodeQP(value);
 
-                // Field Mapping
                 switch (key) {
                     case 'FN': currentContact.fn = value; break;
                     case 'N': currentContact.n = value; break;
@@ -411,30 +474,23 @@ class VCardEngine {
                         currentContact.emails.push({ value: value, type: this.extractType(params) });
                         break;
                     case 'TEL':
-                        currentContact.tels.push({ value: value, type: this.extractType(params) });
+                        // Clean phone number immediately on import
+                        currentContact.tels.push({ value: Utils.cleanPhoneNumber(value), type: this.extractType(params) });
                         break;
                     case 'ADR':
-                        // ADR value format: ;;;Street;City;Region;Zip;Country
                         const adrParts = value.split(';');
-                        // Join non-empty parts
                         currentContact.adr = adrParts.filter(p => p.trim()).join(', ');
                         break;
                     case 'PHOTO':
-                        // Basic Base64 detection
                         const isBase64 = params.some(p => p.toUpperCase().includes('ENCODING=B') || p.toUpperCase().includes('BASE64'));
                         if (isBase64) {
-                            // Clean whitespace
                             currentContact.photo = value.replace(/\s/g, '');
-                            // Add header if missing (simple guess)
                             if (!currentContact.photo.startsWith('data:image')) {
                                 const typeParam = params.find(p => p.toUpperCase().startsWith('TYPE='));
                                 const imgType = typeParam ? typeParam.split('=')[1] : 'jpeg';
                                 currentContact.photo = `data:image/${imgType};base64,${currentContact.photo}`;
                             }
                         }
-                        break;
-                    case 'VERSION':
-                        currentContact.version = value;
                         break;
                 }
             }
@@ -446,7 +502,6 @@ class VCardEngine {
     static extractType(params) {
         const typeParam = params.find(p => p.toUpperCase().startsWith('TYPE='));
         if (typeParam) return typeParam.split('=')[1].toUpperCase();
-        // Fallback: check for standalone params like CELL, WORK
         const types = ['CELL', 'WORK', 'HOME', 'VOICE', 'FAX'];
         for (let t of types) {
             if (params.some(p => p.toUpperCase().includes(t))) return t;
@@ -454,12 +509,12 @@ class VCardEngine {
         return 'OTHER';
     }
 
-    static generate(contacts) {
+    static generate(contacts, single = false) {
         let vcf = '';
-        contacts.forEach(c => {
+        const list = single ? [contacts] : contacts;
+        list.forEach(c => {
             vcf += 'BEGIN:VCARD\nVERSION:3.0\n';
             vcf += `FN:${c.fn}\n`;
-            // N field reconstruction
             if (c.n) vcf += `N:${c.n}\n`;
             else {
                 const parts = c.fn.split(' ');
@@ -471,13 +526,13 @@ class VCardEngine {
             if (c.org) vcf += `ORG:${c.org}\n`;
             if (c.title) vcf += `TITLE:${c.title}\n`;
             if (c.note) vcf += `NOTE:${c.note.replace(/\n/g, '\\n')}\n`;
-            if (c.adr) vcf += `ADR;TYPE=HOME:;;${c.adr};;;;\n`; // Simplified ADR generation
+            if (c.adr) vcf += `ADR;TYPE=HOME:;;${c.adr};;;;\n`;
 
             c.tels.forEach(t => vcf += `TEL;TYPE=${t.type || 'CELL'}:${t.value}\n`);
             c.emails.forEach(e => vcf += `EMAIL;TYPE=${e.type || 'INTERNET'}:${e.value}\n`);
 
+            // Include photo for file export, maybe exclude for QR if too big
             if (c.photo && c.photo.startsWith('data:image')) {
-                // Strip header
                 const b64 = c.photo.split(',')[1];
                 vcf += `PHOTO;ENCODING=b;TYPE=JPEG:${b64}\n`;
             }
@@ -501,7 +556,16 @@ class App {
             selectedIds: new Set(),
             sort: { key: 'fn', dir: 'asc' },
             pagination: { page: 1, limit: 50 },
-            theme: localStorage.getItem('theme') || 'dark'
+            theme: localStorage.getItem('theme') || 'dark',
+            columns: {
+                fn: { label: 'Name', visible: true, locked: true },
+                tel: { label: 'Phone', visible: true, locked: false },
+                email: { label: 'Email', visible: true, locked: false },
+                org: { label: 'Organization', visible: true, locked: false },
+                title: { label: 'Title', visible: false, locked: false },
+                adr: { label: 'Address', visible: false, locked: false }
+            },
+            activeActionContact: null
         };
 
         this.init();
@@ -511,6 +575,12 @@ class App {
         this.applyTheme();
         this.setupEventListeners();
         this.render();
+        // Global click to close context menu
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#column-context-menu')) {
+                document.getElementById('column-context-menu').classList.add('hidden');
+            }
+        });
     }
 
     setupEventListeners() {
@@ -530,11 +600,16 @@ class App {
         // Search
         document.getElementById('search-input').addEventListener('input', (e) => this.handleSearch(e.target.value));
 
-        // Select All
-        document.getElementById('select-all').addEventListener('change', (e) => this.toggleSelectAll(e.target.checked));
-
         // Theme
         document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
+
+        // Context Menu trigger
+        document.getElementById('contact-table').addEventListener('contextmenu', (e) => {
+            if (e.target.tagName === 'TH') {
+                e.preventDefault();
+                this.showColumnContextMenu(e.clientX, e.clientY);
+            }
+        });
     }
 
     // --- Logic ---
@@ -547,7 +622,6 @@ class App {
                 const newContacts = VCardEngine.parse(e.target.result);
                 if (newContacts.length === 0) throw new Error("No contacts found");
                 
-                // Append and Deduplicate (Simple ID check, real dedup is complex)
                 this.state.contacts = [...this.state.contacts, ...newContacts];
                 this.showToast(`Successfully imported ${newContacts.length} contacts`, 'success');
                 this.refreshData();
@@ -561,7 +635,7 @@ class App {
 
     handleSearch(query) {
         const q = query.toLowerCase();
-        this.state.pagination.page = 1; // Reset page
+        this.state.pagination.page = 1;
         
         if (!q) {
             this.state.filteredContacts = [...this.state.contacts];
@@ -607,11 +681,38 @@ class App {
     }
 
     refreshData() {
-        // Reset filters
         document.getElementById('search-input').value = '';
         this.state.filteredContacts = [...this.state.contacts];
         this.sortData();
         this.render();
+    }
+
+    toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    // --- Columns Context Menu ---
+    showColumnContextMenu(x, y) {
+        const menu = document.getElementById('column-context-menu');
+        menu.innerHTML = '';
+        
+        Object.entries(this.state.columns).forEach(([key, col]) => {
+            if (col.locked) return;
+            const item = document.createElement('div');
+            item.className = 'context-menu-item';
+            item.innerHTML = `<input type="checkbox" ${col.visible ? 'checked' : ''}> ${col.label}`;
+            item.onclick = (e) => {
+                e.stopPropagation();
+                this.state.columns[key].visible = !this.state.columns[key].visible;
+                this.renderTable();
+                this.showColumnContextMenu(x, y); // keep open or re-render
+            };
+            menu.appendChild(item);
+        });
+
+        menu.style.left = x + 'px';
+        menu.style.top = y + 'px';
+        menu.classList.remove('hidden');
     }
 
     // --- Batch Actions ---
@@ -622,7 +723,7 @@ class App {
         } else {
             this.state.selectedIds.clear();
         }
-        this.renderTable(); // Re-render checkboxes
+        this.renderTable();
         this.updateBatchUI();
     }
 
@@ -655,11 +756,78 @@ class App {
 
     exportSelected() {
         const selected = this.state.contacts.filter(c => this.state.selectedIds.has(c.id));
-        this.downloadVCF(selected, 'selected_contacts.vcf');
+        this.downloadVCF(selected);
         this.toggleBatchMenu();
     }
 
-    // --- CRUD ---
+    // --- Action Modal (QR & Href) ---
+
+    openActionModal(id, initialTab = 'contact') {
+        const contact = this.state.contacts.find(c => c.id === id);
+        if (!contact) return;
+        
+        this.state.activeActionContact = contact;
+        document.getElementById('action-modal-overlay').classList.add('active');
+        this.switchActionTab(initialTab);
+    }
+
+    closeActionModal() {
+        document.getElementById('action-modal-overlay').classList.remove('active');
+        this.state.activeActionContact = null;
+    }
+
+    switchActionTab(tab) {
+        document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(`tab-${tab}`).classList.add('active');
+
+        const c = this.state.activeActionContact;
+        const qrContainer = document.getElementById('qr-output');
+        const link = document.getElementById('action-href');
+        qrContainer.innerHTML = '';
+        link.classList.add('hidden');
+
+        let qrText = '';
+        
+        if (tab === 'contact') {
+            // Generate minimal VCF for QR (strip photo to save space)
+            const minimalC = { ...c, photo: null };
+            qrText = VCardEngine.generate(minimalC, true);
+            link.textContent = '';
+        } else if (tab === 'phone') {
+            const num = c.tels[0]?.value || '';
+            if (num) {
+                qrText = `tel:${num}`;
+                link.href = `tel:${num}`;
+                link.textContent = `Call ${num}`;
+                link.classList.remove('hidden');
+            } else {
+                qrContainer.innerHTML = '<p style="color:var(--text-muted)">No phone number available</p>';
+            }
+        } else if (tab === 'email') {
+            const mail = c.emails[0]?.value || '';
+            if (mail) {
+                qrText = `mailto:${mail}`;
+                link.href = `mailto:${mail}`;
+                link.textContent = `Email ${mail}`;
+                link.classList.remove('hidden');
+            } else {
+                qrContainer.innerHTML = '<p style="color:var(--text-muted)">No email available</p>';
+            }
+        }
+
+        if (qrText) {
+            new QRCode(qrContainer, {
+                text: qrText,
+                width: 200,
+                height: 200,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.L
+            });
+        }
+    }
+
+    // --- CRUD & Edit Modal ---
 
     deleteContact(id) {
         if (confirm('Delete this contact?')) {
@@ -673,10 +841,10 @@ class App {
         const modal = document.getElementById('modal-overlay');
         const title = document.getElementById('modal-title');
         
-        // Reset fields
         document.querySelectorAll('.modal input, .modal textarea').forEach(i => i.value = '');
         document.getElementById('edit-avatar-preview').innerHTML = '?';
         document.getElementById('edit-avatar-preview').style.backgroundImage = 'none';
+        document.getElementById('note-counter').textContent = '0/1000';
 
         if (id) {
             const c = this.state.contacts.find(x => x.id === id);
@@ -685,7 +853,6 @@ class App {
             title.textContent = 'Edit Contact';
             document.getElementById('edit-id').value = c.id;
             
-            // Name split logic
             const nameParts = (c.fn || '').split(' ');
             document.getElementById('edit-fn-last').value = nameParts.length > 1 ? nameParts.pop() : '';
             document.getElementById('edit-fn-first').value = nameParts.join(' ');
@@ -694,17 +861,15 @@ class App {
             document.getElementById('edit-title').value = c.title || '';
             document.getElementById('edit-adr').value = c.adr || '';
             document.getElementById('edit-note').value = c.note || '';
+            this.updateCharCount(document.getElementById('edit-note'));
             
-            // Phones (Find Cell and Work)
             const cell = c.tels.find(t => t.type === 'CELL' || t.type === 'OTHER');
             const work = c.tels.find(t => t.type === 'WORK');
             if (cell) document.getElementById('edit-tel-cell').value = cell.value;
             if (work) document.getElementById('edit-tel-work').value = work.value;
 
-            // Email (Primary)
             if (c.emails.length) document.getElementById('edit-email').value = c.emails[0].value;
 
-            // Avatar
             if (c.photo) {
                 document.getElementById('edit-avatar-preview').style.backgroundImage = `url(${c.photo})`;
                 document.getElementById('edit-avatar-preview').innerHTML = '';
@@ -725,9 +890,14 @@ class App {
         document.getElementById('modal-overlay').classList.remove('active');
     }
 
+    updateCharCount(textarea) {
+        const count = textarea.value.length;
+        document.getElementById('note-counter').textContent = `${count}/1000`;
+    }
+
     saveContact() {
         const id = document.getElementById('edit-id').value;
-        const first = document.getElementById('edit-fn-first').value.trim();
+        constfirst = document.getElementById('edit-fn-first').value.trim();
         const last = document.getElementById('edit-fn-last').value.trim();
         const fn = `${first} ${last}`.trim();
         
@@ -744,8 +914,9 @@ class App {
             emails: []
         };
 
-        const cell = document.getElementById('edit-tel-cell').value;
-        const work = document.getElementById('edit-tel-work').value;
+        // Apply Cleaning Logic Here
+        const cell = Utils.cleanPhoneNumber(document.getElementById('edit-tel-cell').value);
+        const work = Utils.cleanPhoneNumber(document.getElementById('edit-tel-work').value);
         const email = document.getElementById('edit-email').value;
 
         if (cell) contactData.tels.push({ value: cell, type: 'CELL' });
@@ -753,16 +924,13 @@ class App {
         if (email) contactData.emails.push({ value: email, type: 'INTERNET' });
 
         if (id) {
-            // Update
             const idx = this.state.contacts.findIndex(c => c.id === id);
             if (idx > -1) {
-                // Preserve photo and id
                 contactData.id = id;
                 contactData.photo = this.state.contacts[idx].photo;
                 this.state.contacts[idx] = contactData;
             }
         } else {
-            // Create
             contactData.id = Utils.generateId();
             contactData.photo = null;
             this.state.contacts.unshift(contactData);
@@ -776,12 +944,10 @@ class App {
     // --- Rendering ---
 
     render() {
-        // Update Stats
         document.getElementById('total-contacts').textContent = this.state.contacts.length;
         const orgs = new Set(this.state.contacts.map(c => c.org).filter(Boolean));
         document.getElementById('total-orgs').textContent = orgs.size;
 
-        // Toggle Empty State
         const hasContacts = this.state.contacts.length > 0;
         document.getElementById('empty-state').classList.toggle('hidden', hasContacts);
         document.getElementById('contact-table').classList.toggle('hidden', !hasContacts);
@@ -791,23 +957,36 @@ class App {
     }
 
     renderTable() {
+        const thead = document.getElementById('table-head');
         const tbody = document.getElementById('table-body');
-        tbody.innerHTML = '';
+        
+        // Render Headers dynamically based on visible columns
+        let headerHTML = `<tr><th style="width: 40px;"><div class="checkbox-wrapper"><input type="checkbox" id="select-all"></div></th>`;
+        Object.entries(this.state.columns).forEach(([key, col]) => {
+            if (col.visible) {
+                headerHTML += `<th onclick="app.sort('${key}')">${col.label} ↕</th>`;
+            }
+        });
+        headerHTML += `<th style="text-align: right;">Actions</th></tr>`;
+        thead.innerHTML = headerHTML;
+        
+        // Re-attach Select All listener
+        document.getElementById('select-all').addEventListener('change', (e) => this.toggleSelectAll(e.target.checked));
 
-        // Pagination Logic
+        // Render Body
+        tbody.innerHTML = '';
         const { page, limit } = this.state.pagination;
         const start = (page - 1) * limit;
         const end = start + limit;
         const pageData = this.state.filteredContacts.slice(start, end);
 
-        // Update Page Info
         document.getElementById('page-info').textContent = `${Math.min(start + 1, this.state.filteredContacts.length)}-${Math.min(end, this.state.filteredContacts.length)} of ${this.state.filteredContacts.length}`;
 
         pageData.forEach(c => {
             const tr = document.createElement('tr');
+            tr.ondblclick = () => this.openModal(c.id); // Double click to edit
             const isSelected = this.state.selectedIds.has(c.id);
             
-            // Avatar Logic
             let avatarHtml = '';
             if (c.photo) {
                 avatarHtml = `<img src="${c.photo}" class="avatar">`;
@@ -817,29 +996,48 @@ class App {
                 avatarHtml = `<div class="avatar" style="background:${color}">${initials}</div>`;
             }
 
-            // Phone & Email Display (First one only)
-            const phone = c.tels.length ? c.tels[0].value : '';
-            const email = c.emails.length ? c.emails[0].value : '';
+            let rowHTML = `<td><div class="checkbox-wrapper"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="app.toggleSelection('${c.id}')"></div></td>`;
 
-            tr.innerHTML = `
-                <td><div class="checkbox-wrapper"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="app.toggleSelection('${c.id}')"></div></td>
+            if (this.state.columns.fn.visible) {
+                rowHTML += `
                 <td>
                     <div class="contact-info">
                         ${avatarHtml}
                         <div class="contact-meta">
                             <span style="font-weight:500">${Utils.escapeHtml(c.fn)}</span>
-                            <span class="meta-sub">${Utils.escapeHtml(c.title || '')}</span>
+                            ${c.title ? `<span class="meta-sub">${Utils.escapeHtml(c.title)}</span>` : ''}
                         </div>
                     </div>
-                </td>
-                <td>${Utils.escapeHtml(phone)}</td>
-                <td>${Utils.escapeHtml(email)}</td>
-                <td>${c.org ? `<span class="tag">${Utils.escapeHtml(c.org)}</span>` : ''}</td>
+                </td>`;
+            }
+
+            if (this.state.columns.tel.visible) {
+                const phone = c.tels.length ? c.tels[0].value : '';
+                rowHTML += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'phone')">${Utils.escapeHtml(phone)}</td>`;
+            }
+
+            if (this.state.columns.email.visible) {
+                const email = c.emails.length ? c.emails[0].value : '';
+                rowHTML += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'email')">${Utils.escapeHtml(email)}</td>`;
+            }
+
+            if (this.state.columns.org.visible) {
+                rowHTML += `<td>${c.org ? `<span class="tag">${Utils.escapeHtml(c.org)}</span>` : ''}</td>`;
+            }
+            if (this.state.columns.title.visible) {
+                rowHTML += `<td>${Utils.escapeHtml(c.title || '')}</td>`;
+            }
+            if (this.state.columns.adr.visible) {
+                rowHTML += `<td>${Utils.escapeHtml(c.adr || '')}</td>`;
+            }
+
+            rowHTML += `
                 <td style="text-align: right;">
                     <button class="btn btn-secondary btn-icon" onclick="app.openModal('${c.id}')" title="Edit">✏️</button>
                     <button class="btn btn-danger btn-icon" onclick="app.deleteContact('${c.id}')" title="Delete">🗑️</button>
                 </td>
             `;
+            tr.innerHTML = rowHTML;
             tbody.appendChild(tr);
         });
     }
@@ -861,10 +1059,17 @@ class App {
 
     // --- Export ---
 
-    downloadVCF(contacts, filename) {
+    downloadVCF(contacts) {
         if (contacts.length === 0) return;
         const vcfContent = VCardEngine.generate(contacts);
         const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8' });
+        
+        // Formatting Filename: Nexus_Contacts_YYYY-MM-DD_HH-mm_Qty-X.vcf
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0,10);
+        const timeStr = now.toTimeString().slice(0,5).replace(':','-');
+        const filename = `Nexus_Contacts_${dateStr}_${timeStr}_Qty-${contacts.length}.vcf`;
+
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
