@@ -13,7 +13,7 @@
             /* Core Palette */
             --primary: #6366f1;
             --primary-hover: #4f46e5;
-            --primary-light: rgba(99, 102, 241, 0.1);
+            --primary-light: rgba(99, 102, 241, 0.15);
             --danger: #ef4444;
             --success: #10b981;
             --warning: #f59e0b;
@@ -43,149 +43,153 @@
         * { box-sizing: border-box; outline: none; }
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; transition: background 0.3s, color 0.3s; }
 
-        /* --- Layout --- */
-        .sidebar { width: 220px; background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1rem; z-index: 20; transition: width 0.3s ease; position: relative; }
-        .sidebar.collapsed { width: 60px; padding: 1rem 0.5rem; }
+        /* --- Drag Drop Overlay (Fixed) --- */
+        #drop-zone { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: rgba(99, 102, 241, 0.95); 
+            z-index: 9999; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            color: white; 
+            visibility: hidden; opacity: 0; 
+            pointer-events: none;
+            transition: opacity 0.2s, visibility 0.2s;
+            backdrop-filter: blur(4px);
+        }
+        #drop-zone.active { 
+            visibility: visible; opacity: 1; 
+            pointer-events: all; 
+        }
+        #drop-zone h2 { font-size: 4rem; margin-bottom: 1rem; }
+        #drop-zone h3 { font-size: 1.5rem; font-weight: 500; }
+
+        /* --- Sidebar --- */
+        .sidebar { width: 240px; background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.25rem; z-index: 20; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
+        .sidebar.collapsed { width: 70px; padding: 1.25rem 0.5rem; }
         .sidebar.collapsed .logo span, 
-        .sidebar.collapsed .sidebar-footer-content { display: none; }
+        .sidebar.collapsed .sidebar-text { display: none; }
         .sidebar.collapsed .logo { justify-content: center; }
-        .sidebar.collapsed .btn { padding: 0.6rem; }
+        .sidebar.collapsed .btn { padding: 0.6rem; justify-content: center; }
         
-        .sidebar-toggle { position: absolute; top: 50%; right: -12px; transform: translateY(-50%); width: 24px; height: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); z-index: 30; box-shadow: var(--shadow); }
+        .sidebar-toggle { position: absolute; top: 40px; right: -12px; width: 24px; height: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); z-index: 30; box-shadow: var(--shadow); transition: color 0.2s; }
         .sidebar-toggle:hover { color: var(--primary); }
 
-        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-        
-        /* --- Typography & Components --- */
-        h1, h2, h3 { margin: 0; }
-        .logo { font-size: 1.1rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; white-space: nowrap; overflow: hidden; }
+        .logo { font-size: 1.25rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; white-space: nowrap; overflow: hidden; height: 30px; }
         .logo span { color: var(--text-main); }
         
-        .btn { cursor: pointer; border: none; padding: 0.5rem 0.8rem; border-radius: 6px; font-weight: 500; font-size: 0.8rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; justify-content: center; white-space: nowrap; }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3); }
+        /* Sidebar Footer Stats */
+        .sidebar-footer { margin-top: auto; border-top: 1px solid var(--border); padding-top: 1.5rem; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
+        .stat-item { display: flex; flex-direction: column; align-items: center; background: var(--bg-body); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); }
+        .stat-val { font-weight: 700; font-size: 1.1rem; }
+        .stat-lbl { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
+
+        /* --- Main Content --- */
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        
+        /* --- Toolbar --- */
+        .toolbar { padding: 0 1.5rem; height: 70px; background: var(--glass); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 1rem; z-index: 10; flex-shrink: 0; }
+        
+        .search-wrapper { position: relative; flex: 1; max-width: 400px; }
+        .search-wrapper input { width: 100%; padding: 0.6rem 1rem 0.6rem 2.4rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; transition: border-color 0.2s; }
+        .search-wrapper input:focus { border-color: var(--primary); }
+        .search-wrapper svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 16px; }
+
+        .toolbar-actions { display: flex; gap: 8px; align-items: center; }
+
+        /* Buttons */
+        .btn { cursor: pointer; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; font-size: 0.85rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; justify-content: center; white-space: nowrap; height: 36px; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2); }
         .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
         .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
         .btn-secondary:hover { background: var(--bg-surface-hover); border-color: var(--text-muted); }
         .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
         .btn-danger:hover { background: var(--danger); color: white; }
-        .btn-icon { padding: 0.4rem; border-radius: 6px; }
+        .btn-icon { padding: 0; width: 28px; height: 28px; border-radius: 4px; }
 
-        .badge { padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; background: var(--bg-surface-hover); color: var(--text-muted); }
-
-        /* --- Compact Sidebar Footer --- */
-        .sidebar-footer { margin-top: auto; border-top: 1px solid var(--border); padding-top: 1rem; }
-        .sidebar-stats-row { display: flex; justify-content: space-between; margin-bottom: 0.8rem; font-size: 0.7rem; color: var(--text-muted); }
-        .stat-item { display: flex; flex-direction: column; align-items: center; }
-        .stat-num { font-weight: 700; color: var(--text-main); font-size: 0.9rem; }
-
-        /* --- Toolbar --- */
-        .toolbar { padding: 0.8rem 1.5rem; background: var(--glass); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 1rem; z-index: 10; height: 60px; }
-        .search-wrapper { position: relative; flex: 1; max-width: 350px; }
-        .search-wrapper input { width: 100%; padding: 0.5rem 1rem 0.5rem 2.2rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text-main); font-size: 0.9rem; }
-        .search-wrapper svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 14px; }
-        
-        /* --- Data Grid --- */
-        .table-wrapper { flex: 1; overflow: auto; padding: 0 1.5rem 1.5rem 1.5rem; }
+        /* --- Table --- */
+        .table-wrapper { flex: 1; overflow: auto; padding: 0 1.5rem 1.5rem; position: relative; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 1rem; }
         thead { position: sticky; top: 0; z-index: 5; }
-        th { background: var(--bg-body); padding: 0.8rem; text-align: left; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; transition: color 0.2s; white-space: nowrap; }
+        th { background: var(--bg-body); padding: 0.8rem 1rem; text-align: left; font-weight: 600; font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap; }
         th:hover { color: var(--primary); }
-        td { padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); vertical-align: middle; background: var(--bg-surface); transition: background 0.2s; font-size: 0.9rem; white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+        td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; background: var(--bg-surface); font-size: 0.9rem; white-space: nowrap; max-width: 250px; overflow: hidden; text-overflow: ellipsis; transition: background 0.1s; }
         tr:hover td { background: var(--bg-surface-hover); }
-        
+
         .clickable-cell { cursor: pointer; color: var(--primary); font-weight: 500; }
         .clickable-cell:hover { text-decoration: underline; }
+        .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; background: var(--bg-body); border: 1px solid var(--border); font-size: 0.7rem; color: var(--text-muted); }
 
-        /* Notes Cell */
-        .note-cell { 
-            white-space: normal; 
-            font-size: 0.75rem; 
-            color: var(--text-muted); 
-            line-height: 1.3;
-            max-width: 250px;
-            cursor: text;
-            position: relative;
-        }
-        .note-content {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            min-height: 20px;
-        }
-        .note-cell:hover { background: rgba(0,0,0,0.2); border-radius: 4px; }
-        
-        /* Inline Note Editor */
-        .inline-note-editor { display: flex; flex-direction: column; gap: 5px; position: absolute; top: 0; left: 0; right: 0; z-index: 10; background: var(--bg-surface); border: 1px solid var(--primary); padding: 5px; border-radius: 4px; box-shadow: var(--shadow); }
-        .inline-note-editor textarea { width: 100%; font-size: 0.8rem; font-family: inherit; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); resize: vertical; min-height: 60px; padding: 5px; }
-        .inline-actions { display: flex; justify-content: flex-end; gap: 5px; }
-        
         /* Avatar */
-        .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--bg-surface-hover); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.75rem; color: white; border: 2px solid var(--bg-body); flex-shrink: 0; }
-        .contact-info { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: var(--bg-surface-hover); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; color: white; border: 2px solid var(--bg-body); flex-shrink: 0; }
+        .contact-info { display: flex; align-items: center; gap: 12px; }
         .contact-meta { display: flex; flex-direction: column; }
-        .meta-sub { font-size: 0.7rem; color: var(--text-muted); }
+        .meta-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
 
-        /* Checkbox */
-        .checkbox-wrapper { display: flex; align-items: center; justify-content: center; }
-        input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; accent-color: var(--primary); }
+        /* Notes & Inline Edit */
+        .note-cell { font-size: 0.8rem; color: var(--text-muted); white-space: normal; line-height: 1.4; cursor: text; position: relative; min-width: 200px; }
+        .note-content { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 20px; }
+        .note-cell:hover .note-content { color: var(--text-main); }
+        
+        .inline-editor { position: absolute; top: -5px; left: -5px; right: -5px; z-index: 10; background: var(--bg-surface); border: 1px solid var(--primary); padding: 8px; border-radius: 6px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; animation: fadeIn 0.1s; }
+        .inline-editor textarea { width: 100%; min-height: 60px; font-family: inherit; font-size: 0.85rem; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); padding: 6px; resize: vertical; border-radius: 4px; }
+        .inline-editor-actions { display: flex; justify-content: flex-end; gap: 6px; }
 
-        /* --- Pagination --- */
-        .pagination { padding: 0.8rem 1.5rem; border-top: 1px solid var(--border); background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+        /* Pagination */
+        .pagination { padding: 0.8rem 1.5rem; border-top: 1px solid var(--border); background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; flex-shrink: 0; }
 
-        /* --- Modals --- */
+        /* Modals */
         .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .modal-backdrop.active { opacity: 1; pointer-events: all; }
         .modal { background: var(--bg-surface); width: 600px; max-width: 95%; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 90vh; transform: scale(0.95); transition: transform 0.2s; }
         .modal-backdrop.active .modal { transform: scale(1); }
-        .modal-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .modal-body { padding: 1.5rem; overflow-y: auto; }
-        .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-body); border-radius: 0 0 12px 12px; }
+        .modal-footer { padding: 1.25rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-body); border-radius: 0 0 12px 12px; }
 
-        /* Compact Edit Layout */
-        .edit-header-layout { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; }
-        .edit-avatar-section { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .edit-main-fields { flex: 1; display: flex; flex-direction: column; gap: 0.8rem; }
-        .char-counter { font-size: 0.7rem; color: var(--text-muted); text-align: right; display: block; margin-top: 4px; }
-        
+        /* Forms */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .form-group { margin-bottom: 0; }
         .form-group.full { grid-column: span 2; }
         .form-group label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.6rem; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; font-family: inherit; transition: border-color 0.2s; font-size: 0.9rem; }
+        .form-group input, .form-group textarea { width: 100%; padding: 0.6rem; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; font-family: inherit; font-size: 0.9rem; transition: border-color 0.2s; }
         .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); }
 
-        /* Action Modal (QR) */
-        .action-modal-body { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 2rem; }
-        .qr-container { background: white; padding: 1rem; border-radius: 8px; }
-        .action-tabs { display: flex; gap: 5px; background: var(--bg-body); padding: 4px; border-radius: 8px; margin-bottom: 0.5rem; width: 100%; }
-        .action-tab { flex: 1; text-align: center; padding: 6px; cursor: pointer; border-radius: 6px; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); transition: all 0.2s; }
+        /* Compact Edit Layout */
+        .edit-layout { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .edit-left { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100px; flex-shrink: 0; }
+        .edit-right { flex: 1; display: flex; flex-direction: column; gap: 1rem; }
+        .char-counter { font-size: 0.7rem; color: var(--text-muted); text-align: right; margin-top: 4px; display: block; }
+
+        /* Action Modal */
+        .action-body { padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+        .action-tabs { display: flex; gap: 4px; background: var(--bg-body); padding: 4px; border-radius: 8px; width: 100%; }
+        .action-tab { flex: 1; text-align: center; padding: 8px; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
         .action-tab.active { background: var(--primary); color: white; }
-        
-        .contact-summary { width: 100%; text-align: center; margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem; }
-        .summary-link { display: block; color: var(--primary); text-decoration: none; font-size: 0.95rem; margin-bottom: 0.5rem; }
-        .summary-link:hover { text-decoration: underline; }
-        .summary-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; }
+        .qr-box { background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .action-links { text-align: center; border-top: 1px solid var(--border); width: 100%; padding-top: 1rem; }
+        .action-link-item { display: block; color: var(--primary); text-decoration: none; font-weight: 500; margin-bottom: 0.5rem; font-size: 1rem; }
+        .action-link-item:hover { text-decoration: underline; }
+        .action-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px; }
 
         /* Context Menu */
-        .context-menu { position: absolute; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 1000; min-width: 150px; padding: 5px; animation: fadeIn 0.1s ease-out; }
-        .context-menu-item { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-radius: 4px; font-size: 0.9rem; color: var(--text-main); }
+        .context-menu { position: absolute; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 1000; min-width: 160px; padding: 5px; animation: fadeIn 0.1s; }
+        .context-menu-item { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-radius: 4px; font-size: 0.85rem; color: var(--text-main); }
         .context-menu-item:hover { background: var(--bg-surface-hover); }
 
-        /* --- Utilities --- */
-        .hidden { display: none !important; }
-        .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; background: var(--bg-body); border: 1px solid var(--border); font-size: 0.7rem; margin-right: 4px; }
-
-        /* Toast */
-        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: var(--bg-surface); color: var(--text-main); padding: 0.8rem 1.2rem; border-radius: 8px; box-shadow: var(--shadow); border-left: 4px solid var(--primary); display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease-out; min-width: 250px; font-size: 0.9rem; }
-        .toast.error { border-left-color: var(--danger); }
-        .toast.success { border-left-color: var(--success); }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
         /* Empty State */
-        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); text-align: center; padding: 2rem; }
-        .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.5; }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); text-align: center; padding-bottom: 10%; }
+        .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.3; filter: grayscale(1); }
+
+        /* Utilities */
+        .hidden { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Toast */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--bg-surface); padding: 0.8rem 1.2rem; border-radius: 8px; border-left: 4px solid var(--primary); box-shadow: var(--shadow); font-size: 0.9rem; animation: slideIn 0.3s; color: var(--text-main); display: flex; align-items: center; }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
     </style>
 </head>
@@ -207,39 +211,40 @@
         </div>
 
         <div class="sidebar-footer">
-            <div class="sidebar-footer-content">
-                <div class="sidebar-stats-row">
+            <div class="sidebar-text">
+                <div class="stats-grid">
                     <div class="stat-item">
-                        <span class="stat-num" id="total-contacts">0</span>
-                        <span>Contacts</span>
+                        <span class="stat-val" id="total-contacts">0</span>
+                        <span class="stat-lbl">Contacts</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-num" id="total-orgs">0</span>
-                        <span>Orgs</span>
+                        <span class="stat-val" id="total-orgs">0</span>
+                        <span class="stat-lbl">Orgs</span>
                     </div>
                 </div>
             </div>
             
             <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start;" id="theme-toggle">
-                <span id="theme-icon">🌙</span> <span class="sidebar-footer-content">Theme</span>
+                <span id="theme-icon">🌙</span> <span class="sidebar-text">Toggle Theme</span>
             </button>
-            <div class="sidebar-footer-content" style="margin-top: 10px; font-size: 0.6rem; color: var(--text-muted); text-align: center;">
-                v2.2.0 Enterprise
+            <div class="sidebar-text" style="margin-top: 15px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
+                v2.3.0 Enterprise
             </div>
         </div>
     </aside>
 
     <main class="main-content">
-        <div class="toolbar" id="toolbar"></div>
+        <div class="toolbar" id="toolbar">
+            </div>
 
-        <div id="batch-menu" class="hidden" style="position: absolute; top: 70px; right: 20px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 50; width: 220px;">
+        <div id="batch-menu" class="hidden" style="position: absolute; top: 75px; right: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 50; width: 200px;">
             </div>
 
         <div class="table-wrapper" id="table-container">
             <div class="empty-state" id="empty-state">
                 <div class="empty-icon">📇</div>
                 <h2>No Contacts Yet</h2>
-                <p>Upload a .vcf file or add a contact manually to get started.</p>
+                <p style="margin-top: 0.5rem; font-size: 0.9rem;">Upload a .vcf file or add a contact manually.</p>
             </div>
             
             <table id="contact-table" class="hidden">
@@ -250,7 +255,7 @@
 
         <div class="pagination hidden" id="pagination-controls">
             <span style="color: var(--text-muted);">Showing <span id="page-info">0-0 of 0</span></span>
-            <div style="display: flex; gap: 5px;">
+            <div style="display: flex; gap: 8px;">
                 <button class="btn btn-secondary btn-icon" onclick="app.prevPage()">←</button>
                 <button class="btn btn-secondary btn-icon" onclick="app.nextPage()">→</button>
             </div>
@@ -268,12 +273,12 @@
             <div class="modal-body">
                 <input type="hidden" id="edit-id">
                 
-                <div class="edit-header-layout">
-                    <div class="edit-avatar-section">
+                <div class="edit-layout">
+                    <div class="edit-left">
                         <div id="edit-avatar-preview" class="avatar" style="width: 80px; height: 80px; font-size: 2rem; cursor: pointer;">?</div>
                     </div>
                     
-                    <div class="edit-main-fields">
+                    <div class="edit-right">
                         <div class="form-grid">
                             <div class="form-group">
                                 <label>First Name</label>
@@ -295,7 +300,7 @@
                     </div>
                 </div>
 
-                <div class="form-group full" style="margin-bottom: 1rem;">
+                <div class="form-group full" style="margin-bottom: 1.5rem;">
                     <label>Notes</label>
                     <textarea id="edit-note" rows="3" maxlength="1000" oninput="app.updateCharCount(this)"></textarea>
                     <span class="char-counter" id="note-counter">0/1000</span>
@@ -314,7 +319,7 @@
                         <label>Job Title</label>
                         <input type="text" id="edit-title">
                     </div>
-                    <div class="form-group full">
+                    <div class="form-group">
                         <label>Address</label>
                         <input type="text" id="edit-adr">
                     </div>
@@ -328,29 +333,19 @@
     </div>
 
     <div class="modal-backdrop" id="action-modal-overlay">
-        <div class="modal" style="width: 380px;">
+        <div class="modal" style="width: 400px;">
             <div class="modal-header">
                 <h3 id="action-title">Connect</h3>
                 <button class="btn btn-secondary btn-icon" onclick="app.closeActionModal()">✕</button>
             </div>
-            <div class="action-modal-body">
+            <div class="action-body">
                 <div class="action-tabs" id="action-tabs-container">
                     </div>
                 
-                <div class="qr-container" id="qr-output"></div>
+                <div class="qr-box" id="qr-output"></div>
                 
-                <div id="contact-summary" class="contact-summary hidden">
-                    <div id="summary-phone-container">
-                        <div class="summary-label">Mobile</div>
-                        <a href="#" id="summary-phone" class="summary-link"></a>
+                <div id="action-links-container" class="action-links hidden">
                     </div>
-                    <div id="summary-email-container" style="margin-top: 10px;">
-                        <div class="summary-label">Email</div>
-                        <a href="#" id="summary-email" class="summary-link"></a>
-                    </div>
-                </div>
-                
-                <a href="#" id="action-href" class="summary-link hidden" target="_blank" style="font-size: 1.2rem; margin-top: 1rem;">Open Link</a>
             </div>
         </div>
     </div>
@@ -377,12 +372,19 @@ const Utils = {
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     },
     decodeQP: (str) => str.replace(/=([A-Fa-f0-9]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16))).replace(/=\n/g, ''),
+    
+    // Improved Swedish Phone Cleaner
     cleanPhoneNumber: (num) => {
         if (!num) return '';
-        let clean = num.replace(/[\s\-\(\)]/g, '');
+        let clean = num.replace(/[\s\-\(\)\.]/g, ''); // Remove format chars
+        
+        // 0046... -> +46...
         if (clean.startsWith('0046')) clean = '+' + clean.substring(2);
+        // +4607... -> +467...
         if (clean.startsWith('+4607')) clean = '+467' + clean.substring(5);
+        // 07xxxxxxxx (10 digits starting with 07) -> +467...
         if (/^07\d{8}$/.test(clean)) clean = '+46' + clean.substring(1);
+        
         return clean;
     }
 };
@@ -395,34 +397,35 @@ class VCardEngine {
         const contacts = [];
         let normalized = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         const lines = [];
-        const rawLines = normalized.split('\n');
-        rawLines.forEach(line => {
+        // Unfold lines
+        normalized.split('\n').forEach(line => {
             if (line.length === 0) return;
             if ((line.startsWith(' ') || line.startsWith('\t')) && lines.length > 0) lines[lines.length - 1] += line.substring(1);
             else lines.push(line);
         });
 
         let currentContact = null;
+
         lines.forEach(line => {
             if (line.startsWith('BEGIN:VCARD')) {
-                currentContact = {
-                    id: Utils.generateId(), fn: '', n: '', tels: [], emails: [], org: '', title: '', adr: '', note: '', photo: null, version: '3.0'
-                };
+                currentContact = { id: Utils.generateId(), fn: '', n: '', tels: [], emails: [], org: '', title: '', adr: '', note: '', photo: null, version: '3.0' };
             } else if (line.startsWith('END:VCARD')) {
                 if (currentContact) {
                     if (!currentContact.fn && currentContact.n) currentContact.fn = currentContact.n.replace(/;/g, ' ').trim();
+                    if (!currentContact.fn) currentContact.fn = 'Unknown Contact';
                     contacts.push(currentContact);
                     currentContact = null;
                 }
             } else if (currentContact) {
                 const colonIndex = line.indexOf(':');
                 if (colonIndex === -1) return;
+                
                 let keyPart = line.substring(0, colonIndex);
                 let value = line.substring(colonIndex + 1);
                 let [key, ...params] = keyPart.split(';');
                 key = key.toUpperCase().trim();
-                const isQP = params.some(p => p.toUpperCase().includes('QUOTED-PRINTABLE'));
-                if (isQP) value = Utils.decodeQP(value);
+                
+                if (params.some(p => p.toUpperCase().includes('QUOTED-PRINTABLE'))) value = Utils.decodeQP(value);
 
                 switch (key) {
                     case 'FN': currentContact.fn = value; break;
@@ -449,11 +452,13 @@ class VCardEngine {
         });
         return contacts;
     }
+
     static extractType(params) {
         const typeParam = params.find(p => p.toUpperCase().startsWith('TYPE='));
         if (typeParam) return typeParam.split('=')[1].toUpperCase();
         return ['CELL', 'WORK', 'HOME', 'VOICE', 'FAX'].find(t => params.some(p => p.toUpperCase().includes(t))) || 'OTHER';
     }
+
     static generate(contacts, single = false) {
         let vcf = '';
         const list = single ? [contacts] : contacts;
@@ -500,8 +505,8 @@ class App {
                 title: { label: 'Title', visible: false, locked: false },
                 adr: { label: 'Address', visible: false, locked: false }
             },
-            activeActionContact: null,
-            editingNoteId: null // ID of contact currently having inline note edited
+            editingNoteId: null,
+            activeActionContact: null
         };
         this.init();
     }
@@ -510,25 +515,31 @@ class App {
         this.applyTheme();
         this.setupEventListeners();
         this.render();
+        
+        // Global Click Handlers
         document.addEventListener('click', (e) => {
             if (!e.target.closest('#column-context-menu')) document.getElementById('column-context-menu').classList.add('hidden');
-            // Close inline note editor if clicked outside
-            if (!e.target.closest('.note-cell') && this.state.editingNoteId) {
-                this.cancelInlineEdit();
-            }
+            if (this.state.editingNoteId && !e.target.closest('.note-cell')) this.cancelInlineEdit();
+            if (!e.target.closest('#batch-actions-btn') && !e.target.closest('#batch-menu')) document.getElementById('batch-menu').classList.add('hidden');
         });
     }
 
     setupEventListeners() {
-        document.getElementById('file-input').addEventListener('change', (e) => this.handleFile(e.target.files[0]));
+        // Drag & Drop
         const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file'; fileInput.id = 'hidden-file-input'; fileInput.accept = '.vcf,.vcard'; fileInput.hidden = true;
+        document.body.appendChild(fileInput);
+        fileInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
+
         window.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
         dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('active'); });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault(); dropZone.classList.remove('active');
             if (e.dataTransfer.files.length) this.handleFile(e.dataTransfer.files[0]);
         });
-        document.getElementById('search-input').addEventListener('input', (e) => this.handleSearch(e.target.value));
+
+        // Search & Theme
         document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
         document.getElementById('contact-table').addEventListener('contextmenu', (e) => {
             if (e.target.tagName === 'TH') { e.preventDefault(); this.showColumnContextMenu(e.clientX, e.clientY); }
@@ -550,9 +561,9 @@ class App {
         reader.readAsText(file);
     }
 
-    handleSearch(query) {
-        const q = query.toLowerCase();
+    handleSearch(val) {
         this.state.pagination.page = 1;
+        const q = val.toLowerCase();
         if (!q) this.state.filteredContacts = [...this.state.contacts];
         else {
             this.state.filteredContacts = this.state.contacts.filter(c => 
@@ -562,6 +573,8 @@ class App {
         this.sortData();
         this.renderTable();
     }
+
+    // --- Core UI Logic ---
 
     sort(key) {
         if (this.state.sort.key === key) this.state.sort.dir = this.state.sort.dir === 'asc' ? 'desc' : 'asc';
@@ -582,10 +595,14 @@ class App {
     }
 
     refreshData() {
-        document.getElementById('search-input').value = '';
         this.state.filteredContacts = [...this.state.contacts];
-        this.sortData();
-        this.render();
+        // Don't clear search input on refresh, re-apply it
+        const searchVal = document.getElementById('search-input')?.value || '';
+        if(searchVal) this.handleSearch(searchVal);
+        else {
+            this.sortData();
+            this.render();
+        }
     }
 
     toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
@@ -603,85 +620,63 @@ class App {
                 e.stopPropagation();
                 this.state.columns[key].visible = !this.state.columns[key].visible;
                 this.renderTable();
-                this.showColumnContextMenu(x, y); 
             };
             menu.appendChild(item);
         });
         menu.style.left = x + 'px'; menu.style.top = y + 'px'; menu.classList.remove('hidden');
     }
 
-    // --- Selection Mode Logic ---
+    // --- Selection Logic ---
     toggleSelectionMode(active) {
         this.state.isSelectionMode = active;
         if (!active) this.state.selectedIds.clear();
         this.renderToolbar();
         this.renderTable();
-        this.updateBatchMenu();
     }
 
     toggleSelectAll() {
-        if (this.state.selectedIds.size === this.state.filteredContacts.length) {
-            this.state.selectedIds.clear();
-        } else {
-            this.state.filteredContacts.forEach(c => this.state.selectedIds.add(c.id));
-        }
+        if (this.state.selectedIds.size === this.state.filteredContacts.length) this.state.selectedIds.clear();
+        else this.state.filteredContacts.forEach(c => this.state.selectedIds.add(c.id));
         this.renderTable();
-        this.updateBatchMenu();
+        this.updateBatchButton();
     }
 
     toggleSelection(id) {
         if (this.state.selectedIds.has(id)) this.state.selectedIds.delete(id);
         else this.state.selectedIds.add(id);
-        this.updateBatchMenu();
+        this.updateBatchButton();
+    }
+
+    updateBatchButton() {
+        const btn = document.getElementById('batch-actions-btn');
+        if (btn && this.state.isSelectionMode) btn.textContent = `Actions (${this.state.selectedIds.size}) ▾`;
     }
 
     toggleBatchMenu() {
         const menu = document.getElementById('batch-menu');
         menu.classList.toggle('hidden');
         menu.innerHTML = '';
-        
-        // Permanent Action: Export All
-        const btnExportAll = document.createElement('button');
-        btnExportAll.className = 'btn btn-secondary';
-        btnExportAll.style.cssText = 'width: 100%; border: none; justify-content: flex-start; border-radius: 8px 8px 0 0;';
-        btnExportAll.textContent = `📥 Export All (${this.state.filteredContacts.length})`;
-        btnExportAll.onclick = () => this.exportAll();
-        menu.appendChild(btnExportAll);
 
-        // Selection Actions
+        // Permanent: Export All
+        const itemExportAll = document.createElement('div');
+        itemExportAll.className = 'context-menu-item';
+        itemExportAll.innerHTML = `📥 Export All (${this.state.filteredContacts.length})`;
+        itemExportAll.onclick = () => this.exportAll();
+        menu.appendChild(itemExportAll);
+
         if (this.state.isSelectionMode && this.state.selectedIds.size > 0) {
-            const btnExportSel = document.createElement('button');
-            btnExportSel.className = 'btn btn-secondary';
-            btnExportSel.style.cssText = 'width: 100%; border: none; justify-content: flex-start;';
-            btnExportSel.textContent = `📥 Export Selected (${this.state.selectedIds.size})`;
-            btnExportSel.onclick = () => this.exportSelected();
-            menu.appendChild(btnExportSel);
+            const itemExpSel = document.createElement('div');
+            itemExpSel.className = 'context-menu-item';
+            itemExpSel.innerHTML = `📥 Export Selected (${this.state.selectedIds.size})`;
+            itemExpSel.onclick = () => this.exportSelected();
+            menu.appendChild(itemExpSel);
 
-            const btnDel = document.createElement('button');
-            btnDel.className = 'btn btn-danger';
-            btnDel.style.cssText = 'width: 100%; border: none; justify-content: flex-start; border-radius: 0 0 8px 8px;';
-            btnDel.textContent = `🗑️ Delete Selected (${this.state.selectedIds.size})`;
-            btnDel.onclick = () => this.deleteSelected();
-            menu.appendChild(btnDel);
-        } else {
-             btnExportAll.style.borderRadius = '8px'; // Round bottom if only item
-        }
-    }
-
-    updateBatchMenu() {
-        // Just refresh the batch menu button state if needed, actual menu renders on click
-        const btn = document.getElementById('batch-actions-btn');
-        // Always enabled now due to 'Export All'
-        btn.disabled = false;
-        if (this.state.isSelectionMode) {
-             btn.textContent = `Actions (${this.state.selectedIds.size}) ▾`;
-        } else {
-             btn.textContent = `Actions ▾`;
-        }
-        // If menu is open, refresh it
-        if (!document.getElementById('batch-menu').classList.contains('hidden')) {
-            this.toggleBatchMenu(); 
-            document.getElementById('batch-menu').classList.remove('hidden'); // keep it open
+            const itemDel = document.createElement('div');
+            itemDel.className = 'context-menu-item';
+            itemDel.style.color = 'var(--danger)';
+            itemDel.innerHTML = `🗑️ Delete Selected (${this.state.selectedIds.size})`;
+            itemDel.onclick = () => this.deleteSelected();
+            menu.appendChild(itemDel);
         }
     }
 
@@ -689,54 +684,36 @@ class App {
         if (!confirm(`Delete ${this.state.selectedIds.size} contacts?`)) return;
         this.state.contacts = this.state.contacts.filter(c => !this.state.selectedIds.has(c.id));
         this.state.selectedIds.clear();
-        this.toggleSelectionMode(false); // Exit select mode after delete
+        this.toggleSelectionMode(false);
         this.refreshData();
         this.showToast('Contacts deleted', 'success');
-        document.getElementById('batch-menu').classList.add('hidden');
     }
 
     exportSelected() {
         const selected = this.state.contacts.filter(c => this.state.selectedIds.has(c.id));
         this.downloadVCF(selected);
-        document.getElementById('batch-menu').classList.add('hidden');
     }
+    exportAll() { this.downloadVCF(this.state.filteredContacts); }
 
-    exportAll() {
-        // Export filtered list if search is active, otherwise all
-        this.downloadVCF(this.state.filteredContacts);
-        document.getElementById('batch-menu').classList.add('hidden');
-    }
-
-    // --- Inline Notes ---
+    // --- Inline Note Editing ---
     startInlineEdit(id) {
-        if (this.state.editingNoteId) this.cancelInlineEdit(); // Close others
+        if (this.state.editingNoteId) this.cancelInlineEdit();
         this.state.editingNoteId = id;
-        this.renderTable(); // Re-render to show editor
+        this.renderTable();
         setTimeout(() => {
-            const txt = document.getElementById(`note-edit-${id}`);
-            if(txt) {
-                txt.focus();
-                txt.setSelectionRange(txt.value.length, txt.value.length);
-            }
+            const el = document.getElementById(`note-edit-${id}`);
+            if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
         }, 50);
     }
-
     saveInlineEdit(id) {
         const val = document.getElementById(`note-edit-${id}`).value;
         const c = this.state.contacts.find(x => x.id === id);
-        if (c) {
-            c.note = val;
-            this.showToast('Note updated', 'success');
-        }
+        if (c) { c.note = val; this.showToast('Note updated', 'success'); }
         this.cancelInlineEdit();
     }
+    cancelInlineEdit() { this.state.editingNoteId = null; this.renderTable(); }
 
-    cancelInlineEdit() {
-        this.state.editingNoteId = null;
-        this.renderTable();
-    }
-
-    // --- Action Modal ---
+    // --- Action Modal (QR) ---
     openActionModal(id, initialTab = 'contact') {
         const c = this.state.contacts.find(x => x.id === id);
         if (!c) return;
@@ -754,87 +731,65 @@ class App {
     renderActionTabs() {
         const c = this.state.activeActionContact;
         const container = document.getElementById('action-tabs-container');
-        container.innerHTML = `<div class="action-tab" id="tab-contact" onclick="app.switchActionTab('contact')">Contact</div>`;
-        
-        if (c.tels.length > 0) {
-            container.innerHTML += `<div class="action-tab" id="tab-phone" onclick="app.switchActionTab('phone')">Number</div>`;
-        }
-        if (c.emails.length > 0) {
-            container.innerHTML += `<div class="action-tab" id="tab-email" onclick="app.switchActionTab('email')">Email</div>`;
-        }
+        container.innerHTML = `<div class="action-tab" id="tab-contact" onclick="app.switchActionTab('contact')">vCard</div>`;
+        if (c.tels.length) container.innerHTML += `<div class="action-tab" id="tab-phone" onclick="app.switchActionTab('phone')">Call</div>`;
+        if (c.emails.length) container.innerHTML += `<div class="action-tab" id="tab-email" onclick="app.switchActionTab('email')">Email</div>`;
     }
 
     switchActionTab(tab) {
         document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
         const tabEl = document.getElementById(`tab-${tab}`);
         if(tabEl) tabEl.classList.add('active');
-        else {
-             // Fallback if tab doesn't exist (e.g. no email), go to contact
-             this.switchActionTab('contact');
-             return;
-        }
+        else { this.switchActionTab('contact'); return; }
 
         const c = this.state.activeActionContact;
         const qrContainer = document.getElementById('qr-output');
-        const summary = document.getElementById('contact-summary');
-        const link = document.getElementById('action-href');
-        
+        const linkContainer = document.getElementById('action-links-container');
         qrContainer.innerHTML = '';
-        summary.classList.add('hidden');
-        link.classList.add('hidden');
-        
+        linkContainer.innerHTML = '';
+        linkContainer.classList.add('hidden');
+
         let qrText = '';
 
         if (tab === 'contact') {
-            const minimalC = { ...c, photo: null }; // smaller payload
+            // Default: Show vCard QR + Links below
+            const minimalC = { ...c, photo: null };
             qrText = VCardEngine.generate(minimalC, true);
+            linkContainer.classList.remove('hidden');
             
-            summary.classList.remove('hidden');
-            const phone = c.tels[0]?.value || '';
-            const email = c.emails[0]?.value || '';
-            
-            if (phone) {
-                document.getElementById('summary-phone-container').classList.remove('hidden');
-                const linkP = document.getElementById('summary-phone');
-                linkP.textContent = phone;
-                linkP.href = `tel:${phone}`;
-            } else document.getElementById('summary-phone-container').classList.add('hidden');
-
-            if (email) {
-                document.getElementById('summary-email-container').classList.remove('hidden');
-                const linkE = document.getElementById('summary-email');
-                linkE.textContent = email;
-                linkE.href = `mailto:${email}`;
-            } else document.getElementById('summary-email-container').classList.add('hidden');
+            if (c.tels.length) {
+                linkContainer.innerHTML += `
+                    <div style="margin-bottom: 10px;">
+                        <div class="action-label">Mobile</div>
+                        <a href="tel:${c.tels[0].value}" class="action-link-item">${c.tels[0].value}</a>
+                    </div>`;
+            }
+            if (c.emails.length) {
+                linkContainer.innerHTML += `
+                    <div>
+                        <div class="action-label">Email</div>
+                        <a href="mailto:${c.emails[0].value}" class="action-link-item">${c.emails[0].value}</a>
+                    </div>`;
+            }
 
         } else if (tab === 'phone') {
             const num = c.tels[0]?.value;
             qrText = `tel:${num}`;
-            link.href = `tel:${num}`;
-            link.textContent = `Call ${num}`;
-            link.classList.remove('hidden');
+            linkContainer.classList.remove('hidden');
+            linkContainer.innerHTML = `<a href="tel:${num}" class="action-link-item" style="font-size:1.5rem;">Call ${num}</a>`;
         } else if (tab === 'email') {
             const mail = c.emails[0]?.value;
             qrText = `mailto:${mail}`;
-            link.href = `mailto:${mail}`;
-            link.textContent = `Email ${mail}`;
-            link.classList.remove('hidden');
+            linkContainer.classList.remove('hidden');
+            linkContainer.innerHTML = `<a href="mailto:${mail}" class="action-link-item" style="font-size:1.2rem;">${mail}</a>`;
         }
 
         if (qrText) {
-            new QRCode(qrContainer, { text: qrText, width: 200, height: 200, correctLevel : QRCode.CorrectLevel.L });
+            new QRCode(qrContainer, { text: qrText, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
         }
     }
 
     // --- CRUD ---
-    deleteContact(id) {
-        if (confirm('Delete this contact?')) {
-            this.state.contacts = this.state.contacts.filter(c => c.id !== id);
-            this.refreshData();
-            this.showToast('Contact deleted', 'success');
-        }
-    }
-
     openModal(id = null) {
         const modal = document.getElementById('modal-overlay');
         const title = document.getElementById('modal-title');
@@ -858,17 +813,15 @@ class App {
             document.getElementById('edit-note').value = c.note || '';
             this.updateCharCount(document.getElementById('edit-note'));
             
-            const cell = c.tels.find(t => t.type === 'CELL' || t.type === 'OTHER');
-            const work = c.tels.find(t => t.type === 'WORK');
-            if (cell) document.getElementById('edit-tel-cell').value = cell.value;
-            if (work) document.getElementById('edit-tel-work').value = work.value;
+            if (c.tels.find(t => t.type === 'CELL' || t.type === 'OTHER')) document.getElementById('edit-tel-cell').value = c.tels.find(t => t.type === 'CELL' || t.type === 'OTHER').value;
+            if (c.tels.find(t => t.type === 'WORK')) document.getElementById('edit-tel-work').value = c.tels.find(t => t.type === 'WORK').value;
             if (c.emails.length) document.getElementById('edit-email').value = c.emails[0].value;
 
             if (c.photo) {
                 document.getElementById('edit-avatar-preview').style.backgroundImage = `url(${c.photo})`;
                 document.getElementById('edit-avatar-preview').innerHTML = '';
             } else {
-                document.getElementById('edit-avatar-preview').style.backgroundColor = Utils.stringToColor(c.fn || 'Unknown');
+                document.getElementById('edit-avatar-preview').style.backgroundColor = Utils.stringToColor(c.fn);
                 document.getElementById('edit-avatar-preview').innerHTML = Utils.getInitials(c.fn);
             }
         } else {
@@ -879,7 +832,7 @@ class App {
     }
 
     closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
-    updateCharCount(textarea) { document.getElementById('note-counter').textContent = `${textarea.value.length}/1000`; }
+    updateCharCount(el) { document.getElementById('note-counter').textContent = `${el.value.length}/1000`; }
 
     saveContact() {
         const id = document.getElementById('edit-id').value;
@@ -893,7 +846,6 @@ class App {
             title: document.getElementById('edit-title').value, adr: document.getElementById('edit-adr').value,
             note: document.getElementById('edit-note').value, tels: [], emails: []
         };
-
         const cell = Utils.cleanPhoneNumber(document.getElementById('edit-tel-cell').value);
         const work = Utils.cleanPhoneNumber(document.getElementById('edit-tel-work').value);
         const email = document.getElementById('edit-email').value;
@@ -919,53 +871,56 @@ class App {
         this.showToast('Contact saved', 'success');
     }
 
+    deleteContact(id) {
+        if(confirm('Delete contact?')) {
+            this.state.contacts = this.state.contacts.filter(c => c.id !== id);
+            this.refreshData();
+            this.showToast('Deleted', 'success');
+        }
+    }
+
     // --- Rendering ---
     render() {
         document.getElementById('total-contacts').textContent = this.state.contacts.length;
-        const orgs = new Set(this.state.contacts.map(c => c.org).filter(Boolean));
-        document.getElementById('total-orgs').textContent = orgs.size;
+        document.getElementById('total-orgs').textContent = new Set(this.state.contacts.map(c=>c.org).filter(Boolean)).size;
 
         const hasContacts = this.state.contacts.length > 0;
         document.getElementById('empty-state').classList.toggle('hidden', hasContacts);
         document.getElementById('contact-table').classList.toggle('hidden', !hasContacts);
         document.getElementById('pagination-controls').classList.toggle('hidden', !hasContacts);
-        
+
         this.renderToolbar();
         if (hasContacts) this.renderTable();
     }
 
     renderToolbar() {
-        const t = document.getElementById('toolbar');
+        const toolbar = document.getElementById('toolbar');
         let html = `
             <div class="search-wrapper">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" id="search-input" placeholder="Search contacts..." value="${document.getElementById('search-input')?.value || ''}">
+                <input type="text" id="search-input" placeholder="Search..." value="${document.getElementById('search-input')?.value || ''}">
             </div>
-            <div style="display: flex; gap: 8px;">
+            <div class="toolbar-actions">
         `;
         
         if (this.state.isSelectionMode) {
-             html += `
+            html += `
                 <button class="btn btn-primary" onclick="app.toggleSelectAll()">Select All</button>
                 <button class="btn btn-secondary" onclick="app.toggleSelectionMode(false)">Stop Select</button>
-             `;
+            `;
         } else {
-             html += `
-                <input type="file" id="file-input" accept=".vcf,.vcard" hidden>
-                <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">Import</button>
+            html += `
+                <button class="btn btn-primary" onclick="document.getElementById('hidden-file-input').click()">Import</button>
                 <button class="btn btn-secondary" onclick="app.openModal()">Add</button>
                 <button class="btn btn-secondary" onclick="app.toggleSelectionMode(true)">Select</button>
-             `;
+            `;
         }
 
         html += `
-                <button class="btn btn-secondary" id="batch-actions-btn" onclick="app.toggleBatchMenu()">
-                    ${this.state.isSelectionMode && this.state.selectedIds.size > 0 ? `Actions (${this.state.selectedIds.size})` : 'Actions'} ▾
-                </button>
+                <button class="btn btn-secondary" id="batch-actions-btn" onclick="app.toggleBatchMenu()">Actions ▾</button>
             </div>
         `;
-        t.innerHTML = html;
-        // Re-attach search listener
+        toolbar.innerHTML = html;
         document.getElementById('search-input').addEventListener('input', (e) => this.handleSearch(e.target.value));
     }
 
@@ -973,110 +928,86 @@ class App {
         const thead = document.getElementById('table-head');
         const tbody = document.getElementById('table-body');
         
-        // Headers
-        let headerHTML = `<tr>`;
-        if (this.state.isSelectionMode) {
-             headerHTML += `<th style="width: 40px;">✓</th>`;
-        }
+        // Header
+        let h = '<tr>';
+        if (this.state.isSelectionMode) h += '<th style="width: 40px;">✓</th>';
         Object.entries(this.state.columns).forEach(([key, col]) => {
-            if (col.visible) headerHTML += `<th onclick="app.sort('${key}')">${col.label} ↕</th>`;
+            if (col.visible) h += `<th onclick="app.sort('${key}')">${col.label} ↕</th>`;
         });
-        headerHTML += `<th style="text-align: right;">Actions</th></tr>`;
-        thead.innerHTML = headerHTML;
-        
+        h += '<th style="text-align: right;"></th></tr>';
+        thead.innerHTML = h;
+
         // Body
         tbody.innerHTML = '';
         const { page, limit } = this.state.pagination;
         const start = (page - 1) * limit;
-        const end = start + limit;
-        const pageData = this.state.filteredContacts.slice(start, end);
-        document.getElementById('page-info').textContent = `${Math.min(start + 1, this.state.filteredContacts.length)}-${Math.min(end, this.state.filteredContacts.length)} of ${this.state.filteredContacts.length}`;
+        const pageData = this.state.filteredContacts.slice(start, start + limit);
+        document.getElementById('page-info').textContent = `${Math.min(start + 1, this.state.filteredContacts.length)}-${Math.min(start + limit, this.state.filteredContacts.length)} of ${this.state.filteredContacts.length}`;
 
         pageData.forEach(c => {
             const tr = document.createElement('tr');
             
-            let avatarHtml = '';
-            if (c.photo) avatarHtml = `<img src="${c.photo}" class="avatar">`;
-            else {
-                const color = Utils.stringToColor(c.fn || 'Unknown');
-                avatarHtml = `<div class="avatar" style="background:${color}">${Utils.getInitials(c.fn)}</div>`;
-            }
-
-            let rowHTML = '';
-            
-            // Checkbox column only in Selection Mode
+            // Selection Checkbox
+            let html = '';
             if (this.state.isSelectionMode) {
-                const isSelected = this.state.selectedIds.has(c.id);
-                rowHTML += `<td><div class="checkbox-wrapper"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="app.toggleSelection('${c.id}')"></div></td>`;
+                const checked = this.state.selectedIds.has(c.id);
+                html += `<td><input type="checkbox" ${checked ? 'checked' : ''} onchange="app.toggleSelection('${c.id}')"></td>`;
             }
 
+            // Columns
             if (this.state.columns.fn.visible) {
-                rowHTML += `<td><div class="contact-info">${avatarHtml}<div class="contact-meta"><span style="font-weight:500">${Utils.escapeHtml(c.fn)}</span>${c.title ? `<span class="meta-sub">${Utils.escapeHtml(c.title)}</span>` : ''}</div></div></td>`;
+                let avatar = c.photo ? `<img src="${c.photo}" class="avatar">` : `<div class="avatar" style="background:${Utils.stringToColor(c.fn)}">${Utils.getInitials(c.fn)}</div>`;
+                html += `<td><div class="contact-info">${avatar}<div class="contact-meta"><span style="font-weight:500">${Utils.escapeHtml(c.fn)}</span>${c.title ? `<span class="meta-sub">${Utils.escapeHtml(c.title)}</span>` : ''}</div></div></td>`;
             }
-            if (this.state.columns.tel.visible) {
-                rowHTML += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'phone')">${Utils.escapeHtml(c.tels[0]?.value || '')}</td>`;
-            }
-            if (this.state.columns.email.visible) {
-                rowHTML += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'email')">${Utils.escapeHtml(c.emails[0]?.value || '')}</td>`;
-            }
-            if (this.state.columns.org.visible) {
-                rowHTML += `<td>${c.org ? `<span class="tag">${Utils.escapeHtml(c.org)}</span>` : ''}</td>`;
-            }
+            if (this.state.columns.tel.visible) html += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'phone')">${Utils.escapeHtml(c.tels[0]?.value || '')}</td>`;
+            if (this.state.columns.email.visible) html += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'email')">${Utils.escapeHtml(c.emails[0]?.value || '')}</td>`;
+            if (this.state.columns.org.visible) html += `<td>${c.org ? `<span class="tag">${Utils.escapeHtml(c.org)}</span>` : ''}</td>`;
+            
+            // Inline Notes
             if (this.state.columns.note.visible) {
                 if (this.state.editingNoteId === c.id) {
-                    rowHTML += `
-                        <td class="note-cell">
-                            <div class="inline-note-editor" onclick="event.stopPropagation()">
-                                <textarea id="note-edit-${c.id}">${Utils.escapeHtml(c.note || '')}</textarea>
-                                <div class="inline-actions">
-                                    <button class="btn btn-secondary btn-icon" style="padding: 2px 6px; font-size: 0.7rem;" onclick="app.cancelInlineEdit()">✕</button>
-                                    <button class="btn btn-primary btn-icon" style="padding: 2px 6px; font-size: 0.7rem;" onclick="app.saveInlineEdit('${c.id}')">Save</button>
-                                </div>
+                    html += `<td class="note-cell" style="padding:4px;">
+                        <div class="inline-editor">
+                            <textarea id="note-edit-${c.id}">${Utils.escapeHtml(c.note || '')}</textarea>
+                            <div class="inline-editor-actions">
+                                <button class="btn btn-secondary btn-icon" onclick="app.cancelInlineEdit()">✕</button>
+                                <button class="btn btn-primary btn-icon" onclick="app.saveInlineEdit('${c.id}')">Save</button>
                             </div>
-                        </td>`;
+                        </div>
+                    </td>`;
                 } else {
-                    rowHTML += `
-                        <td class="note-cell" onclick="app.startInlineEdit('${c.id}')">
-                            <div class="note-content">${Utils.escapeHtml(c.note || '') || '<span style="opacity:0.3">Add note...</span>'}</div>
-                        </td>`;
+                    html += `<td class="note-cell" onclick="app.startInlineEdit('${c.id}')">
+                        <div class="note-content">${Utils.escapeHtml(c.note || '') || '<span style="opacity:0.3; font-style:italic;">Add note...</span>'}</div>
+                    </td>`;
                 }
             }
-            if (this.state.columns.title.visible) rowHTML += `<td>${Utils.escapeHtml(c.title || '')}</td>`;
-            if (this.state.columns.adr.visible) rowHTML += `<td>${Utils.escapeHtml(c.adr || '')}</td>`;
 
-            rowHTML += `<td style="text-align: right;">
-                    <button class="btn btn-secondary btn-icon" onclick="app.openModal('${c.id}')" title="Edit">✏️</button>
-                    ${!this.state.isSelectionMode ? `<button class="btn btn-danger btn-icon" onclick="app.deleteContact('${c.id}')" title="Delete">🗑️</button>` : ''}
-                </td>`;
-            
-            tr.innerHTML = rowHTML;
+            if (this.state.columns.title.visible) html += `<td>${Utils.escapeHtml(c.title || '')}</td>`;
+            if (this.state.columns.adr.visible) html += `<td>${Utils.escapeHtml(c.adr || '')}</td>`;
+
+            // Row Actions
+            html += `<td style="text-align: right;">
+                <button class="btn btn-secondary btn-icon" onclick="app.openModal('${c.id}')">✏️</button>
+                ${!this.state.isSelectionMode ? `<button class="btn btn-danger btn-icon" onclick="app.deleteContact('${c.id}')" style="margin-left:4px;">🗑️</button>` : ''}
+            </td>`;
+
+            tr.innerHTML = html;
             tr.ondblclick = (e) => {
-                // Prevent modal opening if clicking note editor
-                if (!e.target.closest('.inline-note-editor')) app.openModal(c.id);
+                if (!e.target.closest('.inline-editor')) app.openModal(c.id);
             };
             tbody.appendChild(tr);
         });
     }
 
-    nextPage() {
-        if (this.state.pagination.page < Math.ceil(this.state.filteredContacts.length / this.state.pagination.limit)) {
-            this.state.pagination.page++;
-            this.renderTable();
-        }
-    }
-    prevPage() {
-        if (this.state.pagination.page > 1) {
-            this.state.pagination.page--;
-            this.renderTable();
-        }
-    }
+    nextPage() { if (this.state.pagination.page * this.state.pagination.limit < this.state.filteredContacts.length) { this.state.pagination.page++; this.renderTable(); } }
+    prevPage() { if (this.state.pagination.page > 1) { this.state.pagination.page--; this.renderTable(); } }
 
     downloadVCF(contacts) {
-        if (contacts.length === 0) return;
+        if (!contacts.length) return;
         const vcfContent = VCardEngine.generate(contacts);
         const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8' });
         const now = new Date();
-        const filename = `Nexus_Contacts_${now.toISOString().slice(0,10)}_${now.toTimeString().slice(0,5).replace(':','-')}_Qty-${contacts.length}.vcf`;
+        const filename = `Nexus_Export_${now.toISOString().slice(0,10)}_${contacts.length}-contacts.vcf`;
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url; a.download = filename;
@@ -1089,7 +1020,7 @@ class App {
     toggleTheme() { this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark'; this.applyTheme(); }
     showToast(msg, type = 'info') {
         const c = document.getElementById('toast-container'); const t = document.createElement('div');
-        t.className = `toast ${type}`; t.innerHTML = `<span>${msg}</span>`; c.appendChild(t);
+        t.className = `toast ${type}`; t.textContent = msg; c.appendChild(t);
         setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
     }
 }
