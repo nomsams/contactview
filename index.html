@@ -230,7 +230,7 @@
                 <span id="theme-icon">🌙</span> <span class="sidebar-text">Toggle Theme</span>
             </button>
             <div class="sidebar-text" style="margin-top: 15px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
-                v2.4.0 Enterprise
+                v2.5.0 Enterprise
             </div>
         </div>
     </aside>
@@ -373,23 +373,45 @@ const Utils = {
     },
     decodeQP: (str) => str.replace(/=([A-Fa-f0-9]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16))).replace(/=\n/g, ''),
     
-    // UPDATED: Strict Sweden logic, but friendly to other countries
+    // UPDATED: Robust Phone Cleaner (Domestic +46 replacement)
     cleanPhoneNumber: (num) => {
         if (!num) return '';
         let clean = num.replace(/[\s\-\(\)\.]/g, ''); 
         
-        // Sweden Specific Rule (07xxxxxxxx) -> +467xxxxxxxx
-        if (/^07\d{8}$/.test(clean)) return '+46' + clean.substring(1);
-
-        // International (0046) -> +46
+        // International (00) -> +
         if (clean.startsWith('00')) return '+' + clean.substring(2);
 
-        // If it starts with +, assume it's correct
+        // Domestic Swedish Rule: 
+        // Starts with 0, followed by a non-zero digit (01, 03, 07, 08 etc.)
+        // Matches 01x, 02x, 03x, 04x, 05x, 06x, 07x, 08, 09x
+        if (/^0[1-9]/.test(clean)) return '+46' + clean.substring(1);
+
+        // If it starts with +, return as is
         if (clean.startsWith('+')) return clean;
 
-        // Fallback: Return original cleaned digits (some VCF parsers handle local nums better if raw)
-        // But for consistency we usually prefer +, but we can't guess country code for everyone.
-        return num.trim(); 
+        // Fallback
+        return clean; 
+    },
+
+    // UTF-8 Encoder for QR (Fixes "* Alsjön" crash)
+    utf16to8: (str) => {
+        var out, i, len, c;
+        out = "";
+        len = str.length;
+        for(i = 0; i < len; i++) {
+            c = str.charCodeAt(i);
+            if ((c >= 0x0001) && (c <= 0x007F)) {
+                out += str.charAt(i);
+            } else if (c > 0x07FF) {
+                out += String.fromCharCode(0xE0 | ((c >> 12) & 0x0F));
+                out += String.fromCharCode(0x80 | ((c >> 6) & 0x3F));
+                out += String.fromCharCode(0x80 | ((c >> 0) & 0x3F));
+            } else {
+                out += String.fromCharCode(0xC0 | ((c >> 6) & 0x1F));
+                out += String.fromCharCode(0x80 | ((c >> 0) & 0x3F));
+            }
+        }
+        return out;
     }
 };
 
@@ -478,11 +500,13 @@ class VCardEngine {
             if (c.note) vcf += `NOTE:${c.note.replace(/\n/g, '\\n')}\n`;
             if (c.adr) vcf += `ADR;TYPE=HOME:;;${c.adr};;;;\n`;
             
-            // UPDATED: Use more explicit TYPE definition for iOS compatibility
+            // UPDATED: Use simplified TEL type for maximum iOS/Android compatibility
+            // "TYPE=CELL" is usually sufficient and universally understood. 
+            // We strip VOICE or complex combos to prevent parsing failures.
             c.tels.forEach(t => {
-                const type = t.type || 'CELL';
-                // Combining CELL,VOICE is safest for iOS to recognize it as a dialable number
-                vcf += `TEL;TYPE=${type},VOICE:${t.value}\n`;
+                let type = t.type || 'CELL';
+                if(type === 'OTHER') type = 'VOICE'; // Fallback
+                vcf += `TEL;TYPE=${type}:${t.value}\n`;
             });
 
             c.emails.forEach(e => vcf += `EMAIL;TYPE=${e.type || 'INTERNET'}:${e.value}\n`);
@@ -530,6 +554,11 @@ class App {
         document.addEventListener('click', (e) => {
             if (!e.target.closest('#column-context-menu')) document.getElementById('column-context-menu').classList.add('hidden');
             if (!e.target.closest('#batch-actions-btn') && !e.target.closest('#batch-menu')) document.getElementById('batch-menu').classList.add('hidden');
+            
+            // Auto-save note on blur (click away)
+            if (this.state.editingNoteId && !e.target.closest('.inline-editor') && !e.target.closest('.note-cell')) {
+                this.saveInlineEdit(this.state.editingNoteId);
+            }
         });
     }
 
@@ -695,7 +724,8 @@ class App {
 
     // --- Inline Note Editing ---
     startInlineEdit(id) {
-        if (this.state.editingNoteId) this.cancelInlineEdit();
+        if (this.state.editingNoteId === id) return;
+        if (this.state.editingNoteId) this.saveInlineEdit(this.state.editingNoteId);
         this.state.editingNoteId = id;
         this.renderTable();
         setTimeout(() => {
@@ -703,15 +733,7 @@ class App {
             if (el) { 
                 el.focus(); 
                 el.setSelectionRange(el.value.length, el.value.length); 
-                // Auto-save on blur
-                el.addEventListener('blur', (e) => {
-                    // Slight delay to check if we clicked the save button
-                    setTimeout(() => {
-                       if (this.state.editingNoteId === id) this.saveInlineEdit(id);
-                    }, 100);
-                });
-                
-                // Keyboard shortcut: Enter = Save, Shift+Enter = New Line
+                // Note: Blur listener handled in Global Click to prevent race conditions
                 el.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -724,17 +746,22 @@ class App {
     
     saveInlineEdit(id) {
         const el = document.getElementById(`note-edit-${id}`);
-        if (!el) return; // already closed
+        // If element is missing, we might have already closed it or switched pages
+        if (!el) {
+            this.state.editingNoteId = null;
+            return;
+        }
+        
         const val = el.value;
         const c = this.state.contacts.find(x => x.id === id);
-        if (c) { c.note = val; this.showToast('Note saved', 'success'); }
+        
+        if (c && c.note !== val) { 
+            c.note = val; 
+            this.showToast('Note saved', 'success'); 
+        }
+        
         this.state.editingNoteId = null;
         this.renderTable();
-    }
-    
-    cancelInlineEdit() { 
-        this.state.editingNoteId = null; 
-        this.renderTable(); 
     }
 
     // --- Action Modal (QR) ---
@@ -744,7 +771,7 @@ class App {
         this.state.activeActionContact = c;
         document.getElementById('action-modal-overlay').classList.add('active');
         this.renderActionTabs();
-        this.switchActionTab(initialTab);
+        this.switchActionTab('contact'); // Force VCard default
     }
 
     closeActionModal() {
@@ -764,8 +791,7 @@ class App {
         document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
         const tabEl = document.getElementById(`tab-${tab}`);
         if(tabEl) tabEl.classList.add('active');
-        else { this.switchActionTab('contact'); return; }
-
+        
         const c = this.state.activeActionContact;
         const qrContainer = document.getElementById('qr-output');
         const linkContainer = document.getElementById('action-links-container');
@@ -777,21 +803,22 @@ class App {
 
         if (tab === 'contact') {
             const minimalC = { ...c, photo: null };
-            qrText = VCardEngine.generate(minimalC, true);
+            // Ensure UTF-8 string is generated for QR
+            qrText = Utils.utf16to8(VCardEngine.generate(minimalC, true));
             linkContainer.classList.remove('hidden');
             
             if (c.tels.length) {
                 linkContainer.innerHTML += `
                     <div style="margin-bottom: 10px;">
                         <div class="action-label">Mobile</div>
-                        <a href="tel:${c.tels[0].value}" class="action-link-item">${c.tels[0].value}</a>
+                        <a href="tel:${c.tels[0].value}" class="action-link-item">${Utils.escapeHtml(c.tels[0].value)}</a>
                     </div>`;
             }
             if (c.emails.length) {
                 linkContainer.innerHTML += `
                     <div>
                         <div class="action-label">Email</div>
-                        <a href="mailto:${c.emails[0].value}" class="action-link-item">${c.emails[0].value}</a>
+                        <a href="mailto:${c.emails[0].value}" class="action-link-item">${Utils.escapeHtml(c.emails[0].value)}</a>
                     </div>`;
             }
 
@@ -799,12 +826,12 @@ class App {
             const num = c.tels[0]?.value;
             qrText = `tel:${num}`;
             linkContainer.classList.remove('hidden');
-            linkContainer.innerHTML = `<a href="tel:${num}" class="action-link-item" style="font-size:1.5rem;">Call ${num}</a>`;
+            linkContainer.innerHTML = `<a href="tel:${num}" class="action-link-item" style="font-size:1.5rem;">Call ${Utils.escapeHtml(num)}</a>`;
         } else if (tab === 'email') {
             const mail = c.emails[0]?.value;
             qrText = `mailto:${mail}`;
             linkContainer.classList.remove('hidden');
-            linkContainer.innerHTML = `<a href="mailto:${mail}" class="action-link-item" style="font-size:1.2rem;">${mail}</a>`;
+            linkContainer.innerHTML = `<a href="mailto:${mail}" class="action-link-item" style="font-size:1.2rem;">${Utils.escapeHtml(mail)}</a>`;
         }
 
         if (qrText) {
@@ -989,7 +1016,7 @@ class App {
             // Inline Notes
             if (this.state.columns.note.visible) {
                 if (this.state.editingNoteId === c.id) {
-                    html += `<td class="note-cell" style="overflow:visible;">
+                    html += `<td class="note-cell" style="padding:4px; overflow:visible;">
                         <div class="inline-editor" onclick="event.stopPropagation()">
                             <textarea id="note-edit-${c.id}">${Utils.escapeHtml(c.note || '')}</textarea>
                             <div class="inline-editor-actions">
