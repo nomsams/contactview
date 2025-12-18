@@ -1,358 +1,329 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Contact Manager | Enterprise Edition</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Contact Manager | Enterprise Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-    <style>
-        :root {
-            /* Core Palette */
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --primary-light: rgba(99, 102, 241, 0.15);
-            --danger: #ef4444;
-            --success: #10b981;
-            --warning: #f59e0b;
-            
-            /* Dark Theme (Default) */
-            --bg-body: #0f172a;
-            --bg-surface: #1e293b;
-            --bg-surface-hover: #334155;
-            --border: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-            --glass: rgba(30, 41, 59, 0.7);
-            --editor-bg: #2d3748;
-        }
+  <style>
+    :root {
+      --primary: #6366f1; --primary-hover: #4f46e5; --primary-light: rgba(99,102,241,0.15);
+      --danger:#ef4444; --success:#10b981; --warning:#f59e0b;
 
-        [data-theme="light"] {
-            --bg-body: #f1f5f9;
-            --bg-surface: #ffffff;
-            --bg-surface-hover: #f8fafc;
-            --border: #e2e8f0;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --glass: rgba(255, 255, 255, 0.8);
-            --editor-bg: #ffffff;
-        }
+      --bg-body:#0f172a; --bg-surface:#1e293b; --bg-surface-hover:#334155;
+      --border:#334155; --text-main:#f8fafc; --text-muted:#94a3b8;
+      --shadow:0 10px 15px -3px rgba(0,0,0,.5);
+      --glass:rgba(30,41,59,.7); --editor-bg:#2d3748;
+    }
+    [data-theme="light"] {
+      --bg-body:#f1f5f9; --bg-surface:#fff; --bg-surface-hover:#f8fafc;
+      --border:#e2e8f0; --text-main:#0f172a; --text-muted:#64748b;
+      --shadow:0 4px 6px -1px rgba(0,0,0,.1); --glass:rgba(255,255,255,.8); --editor-bg:#fff;
+    }
+    *{box-sizing:border-box;outline:none}
+    body{margin:0;font-family:'Inter',sans-serif;background:var(--bg-body);color:var(--text-main);height:100vh;display:flex;overflow:hidden;transition:background .3s,color .3s}
 
-        * { box-sizing: border-box; outline: none; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; transition: background 0.3s, color 0.3s; }
+    #drop-zone{
+      position:fixed;inset:0;background:rgba(99,102,241,.95);z-index:9999;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;color:#fff;visibility:hidden;opacity:0;pointer-events:none;
+      transition:opacity .2s,visibility .2s;backdrop-filter:blur(4px)
+    }
+    #drop-zone.active{visibility:visible;opacity:1;pointer-events:all}
+    #drop-zone h2{font-size:4rem;margin-bottom:1rem}
 
-        /* --- Drag Drop Overlay --- */
-        #drop-zone { 
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-            background: rgba(99, 102, 241, 0.95); 
-            z-index: 9999; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            color: white; 
-            visibility: hidden; opacity: 0; 
-            pointer-events: none;
-            transition: opacity 0.2s, visibility 0.2s;
-            backdrop-filter: blur(4px);
-        }
-        #drop-zone.active { visibility: visible; opacity: 1; pointer-events: all; }
-        #drop-zone h2 { font-size: 4rem; margin-bottom: 1rem; }
+    .sidebar{width:240px;background:var(--bg-surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:1.25rem;z-index:20;transition:width .3s cubic-bezier(.4,0,.2,1);position:relative}
+    .sidebar.collapsed{width:70px;padding:1.25rem .5rem}
+    .sidebar.collapsed .logo span,.sidebar.collapsed .sidebar-text{display:none}
+    .sidebar.collapsed .logo{justify-content:center}
+    .sidebar.collapsed .btn{padding:.6rem;justify-content:center}
 
-        /* --- Sidebar --- */
-        .sidebar { width: 240px; background: var(--bg-surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.25rem; z-index: 20; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
-        .sidebar.collapsed { width: 70px; padding: 1.25rem 0.5rem; }
-        .sidebar.collapsed .logo span, .sidebar.collapsed .sidebar-text { display: none; }
-        .sidebar.collapsed .logo { justify-content: center; }
-        .sidebar.collapsed .btn { padding: 0.6rem; justify-content: center; }
-        
-        .sidebar-toggle { position: absolute; top: 40px; right: -12px; width: 24px; height: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); z-index: 30; box-shadow: var(--shadow); transition: color 0.2s; }
-        .sidebar-toggle:hover { color: var(--primary); }
+    .sidebar-toggle{position:absolute;top:40px;right:-12px;width:24px;height:24px;background:var(--bg-surface);border:1px solid var(--border);
+      border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);z-index:30;
+      box-shadow:var(--shadow);transition:color .2s}
+    .sidebar-toggle:hover{color:var(--primary)}
 
-        .logo { font-size: 1.25rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; white-space: nowrap; overflow: hidden; height: 30px; }
-        .logo span { color: var(--text-main); }
-        
-        .sidebar-footer { margin-top: auto; border-top: 1px solid var(--border); padding-top: 1.5rem; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
-        .stat-item { display: flex; flex-direction: column; align-items: center; background: var(--bg-body); padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); }
-        .stat-val { font-weight: 700; font-size: 1.1rem; }
-        .stat-lbl { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
+    .logo{font-size:1.25rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:10px;margin-bottom:2rem;white-space:nowrap;overflow:hidden;height:30px}
+    .logo span{color:var(--text-main)}
 
-        /* --- Main Content --- */
-        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-        
-        .toolbar { padding: 0 1.5rem; height: 70px; background: var(--glass); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 1rem; z-index: 10; flex-shrink: 0; }
-        
-        .search-wrapper { position: relative; flex: 1; max-width: 400px; }
-        .search-wrapper input { width: 100%; padding: 0.6rem 1rem 0.6rem 2.4rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; transition: border-color 0.2s; }
-        .search-wrapper input:focus { border-color: var(--primary); }
-        .search-wrapper svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 16px; }
+    .sidebar-footer{margin-top:auto;border-top:1px solid var(--border);padding-top:1.5rem}
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem}
+    .stat-item{display:flex;flex-direction:column;align-items:center;background:var(--bg-body);padding:.5rem;border-radius:6px;border:1px solid var(--border)}
+    .stat-val{font-weight:700;font-size:1.1rem}
+    .stat-lbl{font-size:.65rem;color:var(--text-muted);text-transform:uppercase;margin-top:2px}
 
-        .toolbar-actions { display: flex; gap: 8px; align-items: center; }
+    .main-content{flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden}
+    .toolbar{padding:0 1.5rem;height:70px;background:var(--glass);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);
+      display:flex;justify-content:space-between;align-items:center;gap:1rem;z-index:10;flex-shrink:0}
+    .search-wrapper{position:relative;flex:1;max-width:400px}
+    .search-wrapper input{width:100%;padding:.6rem 1rem .6rem 2.4rem;background:var(--bg-surface);border:1px solid var(--border);
+      border-radius:8px;color:var(--text-main);font-size:.9rem;transition:border-color .2s}
+    .search-wrapper input:focus{border-color:var(--primary)}
+    .search-wrapper svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);width:16px}
 
-        .btn { cursor: pointer; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 500; font-size: 0.85rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; justify-content: center; white-space: nowrap; height: 36px; }
-        .btn-primary { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2); }
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
-        .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
-        .btn-secondary:hover { background: var(--bg-surface-hover); border-color: var(--text-muted); }
-        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-        .btn-danger:hover { background: var(--danger); color: white; }
-        .btn-icon { padding: 0; width: 28px; height: 28px; border-radius: 4px; }
+    .toolbar-actions{display:flex;gap:8px;align-items:center}
+    .btn{cursor:pointer;border:none;padding:.5rem 1rem;border-radius:6px;font-weight:500;font-size:.85rem;transition:all .2s;display:inline-flex;align-items:center;
+      gap:6px;justify-content:center;white-space:nowrap;height:36px}
+    .btn-primary{background:var(--primary);color:#fff;box-shadow:0 2px 4px rgba(99,102,241,.2)}
+    .btn-primary:hover{background:var(--primary-hover);transform:translateY(-1px)}
+    .btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text-main)}
+    .btn-secondary:hover{background:var(--bg-surface-hover);border-color:var(--text-muted)}
+    .btn-danger{background:rgba(239,68,68,.1);color:var(--danger)}
+    .btn-danger:hover{background:var(--danger);color:#fff}
+    .btn-icon{padding:0;width:28px;height:28px;border-radius:4px}
 
-        /* --- Table --- */
-        .table-wrapper { flex: 1; overflow: auto; padding: 0 1.5rem 1.5rem; position: relative; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 1rem; }
-        thead { position: sticky; top: 0; z-index: 5; }
-        th { background: var(--bg-body); padding: 0.8rem 1rem; text-align: left; font-weight: 600; font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap; }
-        th:hover { color: var(--primary); }
-        td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; background: var(--bg-surface); font-size: 0.9rem; white-space: nowrap; max-width: 250px; overflow: hidden; text-overflow: ellipsis; transition: background 0.1s; }
-        tr:hover td { background: var(--bg-surface-hover); }
+    .table-wrapper{flex:1;overflow:auto;padding:0 1.5rem 1.5rem;position:relative}
+    table{width:100%;border-collapse:separate;border-spacing:0;margin-top:1rem}
+    thead{position:sticky;top:0;z-index:5}
+    th{background:var(--bg-body);padding:.8rem 1rem;text-align:left;font-weight:600;font-size:.8rem;color:var(--text-muted);
+      border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap}
+    th:hover{color:var(--primary)}
+    td{padding:.6rem 1rem;border-bottom:1px solid var(--border);vertical-align:middle;background:var(--bg-surface);font-size:.9rem;white-space:nowrap;
+      max-width:250px;overflow:hidden;text-overflow:ellipsis;transition:background .1s}
+    tr:hover td{background:var(--bg-surface-hover)}
 
-        .clickable-cell { cursor: pointer; color: var(--primary); font-weight: 500; }
-        .clickable-cell:hover { text-decoration: underline; }
-        .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; background: var(--bg-body); border: 1px solid var(--border); font-size: 0.7rem; color: var(--text-muted); }
+    .clickable-cell{cursor:pointer;color:var(--primary);font-weight:500}
+    .clickable-cell:hover{text-decoration:underline}
+    .tag{display:inline-block;padding:2px 6px;border-radius:4px;background:var(--bg-body);border:1px solid var(--border);font-size:.7rem;color:var(--text-muted)}
+    .avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--bg-surface-hover);display:flex;align-items:center;justify-content:center;
+      font-weight:600;font-size:.8rem;color:#fff;border:2px solid var(--bg-body);flex-shrink:0}
+    .contact-info{display:flex;align-items:center;gap:12px}
+    .contact-meta{display:flex;flex-direction:column}
+    .meta-sub{font-size:.75rem;color:var(--text-muted);margin-top:1px}
 
-        .avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: var(--bg-surface-hover); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem; color: white; border: 2px solid var(--bg-body); flex-shrink: 0; }
-        .contact-info { display: flex; align-items: center; gap: 12px; }
-        .contact-meta { display: flex; flex-direction: column; }
-        .meta-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+    .note-cell{font-size:.8rem;color:var(--text-muted);white-space:normal;line-height:1.4;cursor:pointer;position:relative;min-width:200px}
+    .note-content{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:20px;transition:color .2s}
+    .note-cell:hover .note-content{color:var(--text-main)}
+    .inline-editor{position:absolute;top:-10px;left:-10px;right:-10px;z-index:100;background:var(--editor-bg);border:1px solid var(--primary);padding:10px;
+      border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px;animation:scaleIn .15s ease-out}
+    @keyframes scaleIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+    .inline-editor textarea{width:100%;min-height:80px;font-family:inherit;font-size:.85rem;background:var(--bg-body);border:1px solid var(--border);
+      color:var(--text-main);padding:8px;resize:vertical;border-radius:6px;outline:none}
+    .inline-editor textarea:focus{border-color:var(--primary)}
+    .inline-editor-actions{display:flex;justify-content:flex-end;gap:8px}
 
-        /* Notes & Inline Edit */
-        .note-cell { font-size: 0.8rem; color: var(--text-muted); white-space: normal; line-height: 1.4; cursor: pointer; position: relative; min-width: 200px; }
-        .note-content { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 20px; transition: color 0.2s; }
-        .note-cell:hover .note-content { color: var(--text-main); }
-        
-        .inline-editor { 
-            position: absolute; top: -10px; left: -10px; right: -10px; z-index: 100; 
-            background: var(--editor-bg); border: 1px solid var(--primary); 
-            padding: 10px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
-            display: flex; flex-direction: column; gap: 8px; animation: scaleIn 0.15s ease-out; 
-        }
-        @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
-        .inline-editor textarea { 
-            width: 100%; min-height: 80px; font-family: inherit; font-size: 0.85rem; 
-            background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); 
-            padding: 8px; resize: vertical; border-radius: 6px; outline: none;
-        }
-        .inline-editor textarea:focus { border-color: var(--primary); }
-        
-        .inline-editor-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    .pagination{padding:.8rem 1.5rem;border-top:1px solid var(--border);background:var(--bg-surface);display:flex;justify-content:space-between;align-items:center;
+      font-size:.85rem;flex-shrink:0}
 
-        /* Pagination */
-        .pagination { padding: 0.8rem 1.5rem; border-top: 1px solid var(--border); background: var(--bg-surface); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; flex-shrink: 0; }
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;justify-content:center;align-items:center;z-index:100;
+      opacity:0;pointer-events:none;transition:opacity .2s}
+    .modal-backdrop.active{opacity:1;pointer-events:all}
+    .modal{background:var(--bg-surface);width:600px;max-width:95%;border-radius:12px;box-shadow:var(--shadow);border:1px solid var(--border);
+      display:flex;flex-direction:column;max-height:90vh;transform:scale(.95);transition:transform .2s}
+    .modal-backdrop.active .modal{transform:scale(1)}
+    .modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    .modal-body{padding:1.5rem;overflow-y:auto}
+    .modal-footer{padding:1.25rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;background:var(--bg-body);
+      border-radius:0 0 12px 12px}
 
-        /* Modals */
-        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-        .modal-backdrop.active { opacity: 1; pointer-events: all; }
-        .modal { background: var(--bg-surface); width: 600px; max-width: 95%; border-radius: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 90vh; transform: scale(0.95); transition: transform 0.2s; }
-        .modal-backdrop.active .modal { transform: scale(1); }
-        .modal-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .modal-body { padding: 1.5rem; overflow-y: auto; }
-        .modal-footer { padding: 1.25rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-body); border-radius: 0 0 12px 12px; }
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .form-group{margin-bottom:0}
+    .form-group.full{grid-column:span 2}
+    .form-group label{display:block;margin-bottom:.4rem;color:var(--text-muted);font-size:.8rem;font-weight:500}
+    .form-group input,.form-group textarea{width:100%;padding:.6rem;background:var(--bg-body);border:1px solid var(--border);color:var(--text-main);
+      border-radius:6px;font-family:inherit;font-size:.9rem;transition:border-color .2s}
+    .form-group input:focus,.form-group textarea:focus{border-color:var(--primary)}
 
-        /* Forms */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .form-group { margin-bottom: 0; }
-        .form-group.full { grid-column: span 2; }
-        .form-group label { display: block; margin-bottom: 0.4rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
-        .form-group input, .form-group textarea { width: 100%; padding: 0.6rem; background: var(--bg-body); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; font-family: inherit; font-size: 0.9rem; transition: border-color 0.2s; }
-        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary); }
+    .edit-layout{display:flex;gap:1.5rem;margin-bottom:1.5rem}
+    .edit-left{display:flex;flex-direction:column;align-items:center;gap:10px;width:100px;flex-shrink:0}
+    .edit-right{flex:1;display:flex;flex-direction:column;gap:1rem}
+    .char-counter{font-size:.7rem;color:var(--text-muted);text-align:right;margin-top:4px;display:block}
 
-        .edit-layout { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; }
-        .edit-left { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100px; flex-shrink: 0; }
-        .edit-right { flex: 1; display: flex; flex-direction: column; gap: 1rem; }
-        .char-counter { font-size: 0.7rem; color: var(--text-muted); text-align: right; margin-top: 4px; display: block; }
+    .action-body{padding:2rem;display:flex;flex-direction:column;align-items:center;gap:1.5rem}
+    .action-tabs{display:flex;gap:4px;background:var(--bg-body);padding:4px;border-radius:8px;width:100%}
+    .action-tab{flex:1;text-align:center;padding:8px;font-size:.85rem;font-weight:500;color:var(--text-muted);border-radius:6px;cursor:pointer;transition:all .2s}
+    .action-tab.active{background:var(--primary);color:#fff}
+    .qr-box{background:#fff;padding:1rem;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,.1)}
+    .action-links{text-align:center;border-top:1px solid var(--border);width:100%;padding-top:1rem}
+    .action-link-item{display:block;color:var(--primary);text-decoration:none;font-weight:500;margin-bottom:.5rem;font-size:1rem}
+    .action-link-item:hover{text-decoration:underline}
+    .action-label{font-size:.7rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px}
+    details{width:100%;text-align:left}
+    details pre{white-space:pre-wrap;word-break:break-word;background:var(--bg-body);border:1px solid var(--border);padding:10px;border-radius:8px;color:var(--text-main);margin-top:8px;font-size:.8rem}
 
-        /* Action Modal */
-        .action-body { padding: 2rem; display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
-        .action-tabs { display: flex; gap: 4px; background: var(--bg-body); padding: 4px; border-radius: 8px; width: 100%; }
-        .action-tab { flex: 1; text-align: center; padding: 8px; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); border-radius: 6px; cursor: pointer; transition: all 0.2s; }
-        .action-tab.active { background: var(--primary); color: white; }
-        .qr-box { background: white; padding: 1rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .action-links { text-align: center; border-top: 1px solid var(--border); width: 100%; padding-top: 1rem; }
-        .action-link-item { display: block; color: var(--primary); text-decoration: none; font-weight: 500; margin-bottom: 0.5rem; font-size: 1rem; }
-        .action-link-item:hover { text-decoration: underline; }
-        .action-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px; }
+    .context-menu{position:absolute;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);z-index:1000;
+      min-width:160px;padding:5px;animation:fadeIn .1s}
+    .context-menu-item{padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;border-radius:4px;font-size:.85rem;color:var(--text-main)}
+    .context-menu-item:hover{background:var(--bg-surface-hover)}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);text-align:center;padding-bottom:10%}
+    .empty-icon{font-size:4rem;margin-bottom:1rem;opacity:.3;filter:grayscale(1)}
+    .hidden{display:none!important}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 
-        /* Context Menu */
-        .context-menu { position: absolute; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 1000; min-width: 160px; padding: 5px; animation: fadeIn 0.1s; }
-        .context-menu-item { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; border-radius: 4px; font-size: 0.85rem; color: var(--text-main); }
-        .context-menu-item:hover { background: var(--bg-surface-hover); }
-
-        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); text-align: center; padding-bottom: 10%; }
-        .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.3; filter: grayscale(1); }
-
-        .hidden { display: none !important; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-        
-        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: var(--bg-surface); padding: 0.8rem 1.2rem; border-radius: 8px; border-left: 4px solid var(--primary); box-shadow: var(--shadow); font-size: 0.9rem; animation: slideIn 0.3s; color: var(--text-main); display: flex; align-items: center; }
-        .toast.success { border-left-color: var(--success); }
-        .toast.error { border-left-color: var(--danger); }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-    </style>
+    #toast-container{position:fixed;bottom:20px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:10px}
+    .toast{background:var(--bg-surface);padding:.8rem 1.2rem;border-radius:8px;border-left:4px solid var(--primary);box-shadow:var(--shadow);font-size:.9rem;
+      animation:slideIn .3s;color:var(--text-main);display:flex;align-items:center}
+    .toast.success{border-left-color:var(--success)}
+    .toast.error{border-left-color:var(--danger)}
+    @keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+  </style>
 </head>
 <body>
 
-    <div id="drop-zone">
-        <h2>📂</h2>
-        <h3>Drop VCF file to import</h3>
+  <div id="drop-zone">
+    <h2>📂</h2>
+    <h3>Drop VCF file to import</h3>
+  </div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-toggle" onclick="app.toggleSidebar()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
     </div>
 
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-toggle" onclick="app.toggleSidebar()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
-        </div>
-
-        <div class="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            <span>Nexus</span>
-        </div>
-
-        <div class="sidebar-footer">
-            <div class="sidebar-text">
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <span class="stat-val" id="total-contacts">0</span>
-                        <span class="stat-lbl">Contacts</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-val" id="total-orgs">0</span>
-                        <span class="stat-lbl">Orgs</span>
-                    </div>
-                </div>
-            </div>
-            
-            <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start;" id="theme-toggle">
-                <span id="theme-icon">🌙</span> <span class="sidebar-text">Toggle Theme</span>
-            </button>
-            <div class="sidebar-text" style="margin-top: 15px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
-                v2.5.0 Enterprise
-            </div>
-        </div>
-    </aside>
-
-    <main class="main-content">
-        <div class="toolbar" id="toolbar"></div>
-
-        <div id="batch-menu" class="hidden" style="position: absolute; top: 75px; right: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 50; width: 200px;"></div>
-
-        <div class="table-wrapper" id="table-container">
-            <div class="empty-state" id="empty-state">
-                <div class="empty-icon">📇</div>
-                <h2>No Contacts Yet</h2>
-                <p style="margin-top: 0.5rem; font-size: 0.9rem;">Upload a .vcf file or add a contact manually.</p>
-            </div>
-            
-            <table id="contact-table" class="hidden">
-                <thead id="table-head"></thead>
-                <tbody id="table-body"></tbody>
-            </table>
-        </div>
-
-        <div class="pagination hidden" id="pagination-controls">
-            <span style="color: var(--text-muted);">Showing <span id="page-info">0-0 of 0</span></span>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn btn-secondary btn-icon" onclick="app.prevPage()">←</button>
-                <button class="btn btn-secondary btn-icon" onclick="app.nextPage()">→</button>
-            </div>
-        </div>
-    </main>
-
-    <div id="column-context-menu" class="context-menu hidden"></div>
-
-    <div class="modal-backdrop" id="modal-overlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 id="modal-title">Edit Contact</h3>
-                <button class="btn btn-secondary btn-icon" onclick="app.closeModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="edit-id">
-                
-                <div class="edit-layout">
-                    <div class="edit-left">
-                        <div id="edit-avatar-preview" class="avatar" style="width: 80px; height: 80px; font-size: 2rem; cursor: pointer;">?</div>
-                    </div>
-                    
-                    <div class="edit-right">
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>First Name</label>
-                                <input type="text" id="edit-fn-first">
-                            </div>
-                            <div class="form-group">
-                                <label>Last Name</label>
-                                <input type="text" id="edit-fn-last">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Mobile Phone</label>
-                            <input type="text" id="edit-tel-cell" placeholder="+46...">
-                        </div>
-                        <div class="form-group">
-                            <label>Email Address</label>
-                            <input type="email" id="edit-email">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group full" style="margin-bottom: 1.5rem;">
-                    <label>Notes</label>
-                    <textarea id="edit-note" rows="3" maxlength="1000" oninput="app.updateCharCount(this)"></textarea>
-                    <span class="char-counter" id="note-counter">0/1000</span>
-                </div>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Work Phone</label>
-                        <input type="text" id="edit-tel-work">
-                    </div>
-                    <div class="form-group">
-                        <label>Organization</label>
-                        <input type="text" id="edit-org">
-                    </div>
-                    <div class="form-group">
-                        <label>Job Title</label>
-                        <input type="text" id="edit-title">
-                    </div>
-                    <div class="form-group">
-                        <label>Address</label>
-                        <input type="text" id="edit-adr">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="app.closeModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="app.saveContact()">Save Changes</button>
-            </div>
-        </div>
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+      <span>Nexus</span>
     </div>
 
-    <div class="modal-backdrop" id="action-modal-overlay">
-        <div class="modal" style="width: 400px;">
-            <div class="modal-header">
-                <h3 id="action-title">Connect</h3>
-                <button class="btn btn-secondary btn-icon" onclick="app.closeActionModal()">✕</button>
-            </div>
-            <div class="action-body">
-                <div class="action-tabs" id="action-tabs-container"></div>
-                
-                <div class="qr-box" id="qr-output"></div>
-                
-                <div id="action-links-container" class="action-links hidden"></div>
-            </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-text">
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-val" id="total-contacts">0</span>
+            <span class="stat-lbl">Contacts</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val" id="total-orgs">0</span>
+            <span class="stat-lbl">Orgs</span>
+          </div>
         </div>
+      </div>
+
+      <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start;" id="theme-toggle">
+        <span id="theme-icon">🌙</span> <span class="sidebar-text">Toggle Theme</span>
+      </button>
+      <div class="sidebar-text" style="margin-top: 15px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
+        v2.5.0 Enterprise
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="toolbar" id="toolbar"></div>
+
+    <div id="batch-menu" class="hidden" style="position: absolute; top: 75px; right: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 50; width: 200px;"></div>
+
+    <div class="table-wrapper" id="table-container">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">📇</div>
+        <h2>No Contacts Yet</h2>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Upload a .vcf file or add a contact manually.</p>
+      </div>
+
+      <table id="contact-table" class="hidden">
+        <thead id="table-head"></thead>
+        <tbody id="table-body"></tbody>
+      </table>
     </div>
 
-    <div id="toast-container"></div>
+    <div class="pagination hidden" id="pagination-controls">
+      <span style="color: var(--text-muted);">Showing <span id="page-info">0-0 of 0</span></span>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary btn-icon" onclick="app.prevPage()">←</button>
+        <button class="btn btn-secondary btn-icon" onclick="app.nextPage()">→</button>
+      </div>
+    </div>
+  </main>
+
+  <div id="column-context-menu" class="context-menu hidden"></div>
+
+  <div class="modal-backdrop" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">Edit Contact</h3>
+        <button class="btn btn-secondary btn-icon" onclick="app.closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-id">
+
+        <div class="edit-layout">
+          <div class="edit-left">
+            <div id="edit-avatar-preview" class="avatar" style="width: 80px; height: 80px; font-size: 2rem; cursor: pointer;">?</div>
+          </div>
+
+          <div class="edit-right">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>First Name</label>
+                <input type="text" id="edit-fn-first">
+              </div>
+              <div class="form-group">
+                <label>Last Name</label>
+                <input type="text" id="edit-fn-last">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Mobile Phone</label>
+              <input type="text" id="edit-tel-cell" placeholder="+46...">
+            </div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" id="edit-email">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group full" style="margin-bottom: 1.5rem;">
+          <label>Notes</label>
+          <textarea id="edit-note" rows="3" maxlength="1000" oninput="app.updateCharCount(this)"></textarea>
+          <span class="char-counter" id="note-counter">0/1000</span>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Work Phone</label>
+            <input type="text" id="edit-tel-work">
+          </div>
+          <div class="form-group">
+            <label>Organization</label>
+            <input type="text" id="edit-org">
+          </div>
+          <div class="form-group">
+            <label>Job Title</label>
+            <input type="text" id="edit-title">
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <input type="text" id="edit-adr">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="app.saveContact()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="action-modal-overlay">
+    <div class="modal" style="width: 420px;">
+      <div class="modal-header">
+        <h3 id="action-title">Connect</h3>
+        <button class="btn btn-secondary btn-icon" onclick="app.closeActionModal()">✕</button>
+      </div>
+      <div class="action-body">
+        <div class="action-tabs" id="action-tabs-container"></div>
+        <div class="qr-box" id="qr-output"></div>
+        <div id="action-links-container" class="action-links hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
 
 <script>
 /**
  * GLOBAL DEFAULTS
- * vCard 2.1 is default for QR and exports for maximum Android camera/import compatibility.
+ * vCard 2.1 is still the default. The important change is that the vCard 2.1 we encode in QR
+ * is now "minimal + plain" (no CHARSET params, no multi-param TEL combos), because several Android
+ * camera contact parsers choke and then show an empty "Create contact" screen.
  */
 const VCARD_DEFAULT_VERSION = '2.1';
 
@@ -360,905 +331,913 @@ const VCARD_DEFAULT_VERSION = '2.1';
  * UTILITIES
  */
 const Utils = {
-    generateId: () => crypto.randomUUID(),
-    escapeHtml: (str) => (!str) ? '' : str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"),
-    stringToColor: (str) => {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-        return '#' + '00000'.substring(0, 6 - c.length) + c;
-    },
-    getInitials: (name) => {
-        if (!name) return '?';
-        const parts = name.trim().split(' ');
-        if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    },
-    decodeQP: (str) =>
-        (str || '')
-            .replace(/=([A-Fa-f0-9]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))
-            .replace(/=\r?\n/g, ''),
+  generateId: () => crypto.randomUUID(),
+  escapeHtml: (str) => (!str) ? '' : String(str)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#039;"),
+  stringToColor: (str) => {
+    str = String(str || '');
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return '#' + '00000'.substring(0, 6 - c.length) + c;
+  },
+  getInitials: (name) => {
+    if (!name) return '?';
+    const parts = String(name).trim().split(' ').filter(Boolean);
+    if (parts.length === 1) return parts[0].substring(0,2).toUpperCase();
+    return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+  },
+  decodeQP: (str) =>
+    String(str || '')
+      .replace(/=([A-Fa-f0-9]{2})/g, (m, hex) => String.fromCharCode(parseInt(hex, 16)))
+      .replace(/=\r?\n/g, ''),
 
-    // Robust Phone Cleaner (+46 domestic handling kept)
-    cleanPhoneNumber: (num) => {
-        if (!num) return '';
-        let clean = String(num).replace(/[\s\-\(\)\.]/g, '');
-        
-        // International (00) -> +
-        if (clean.startsWith('00')) return '+' + clean.substring(2);
+  cleanPhoneNumber: (num) => {
+    if (!num) return '';
+    let clean = String(num).replace(/[\s\-\(\)\.]/g, '');
+    if (clean.startsWith('00')) return '+' + clean.substring(2);
+    if (/^0[1-9]/.test(clean)) return '+46' + clean.substring(1);
+    if (clean.startsWith('+')) return clean;
+    return clean;
+  },
 
-        // Domestic Swedish Rule
-        if (/^0[1-9]/.test(clean)) return '+46' + clean.substring(1);
-
-        // If it starts with +, return as is
-        if (clean.startsWith('+')) return clean;
-
-        // Fallback
-        return clean; 
-    },
-
-    // UTF-8 encoder for QRCode.js (prevents non-ASCII crashes/mis-encodes in some browsers)
-    utf16to8: (str) => {
-        var out = "", i = 0, len = (str || "").length, c;
-        for(i = 0; i < len; i++) {
-            c = str.charCodeAt(i);
-            if ((c >= 0x0001) && (c <= 0x007F)) {
-                out += str.charAt(i);
-            } else if (c > 0x07FF) {
-                out += String.fromCharCode(0xE0 | ((c >> 12) & 0x0F));
-                out += String.fromCharCode(0x80 | ((c >> 6) & 0x3F));
-                out += String.fromCharCode(0x80 | ((c >> 0) & 0x3F));
-            } else {
-                out += String.fromCharCode(0xC0 | ((c >> 6) & 0x1F));
-                out += String.fromCharCode(0x80 | ((c >> 0) & 0x3F));
-            }
-        }
-        return out;
+  // Keep this for non-ASCII payloads; but we will only apply it when needed.
+  utf16to8: (str) => {
+    str = String(str || '');
+    let out = "", i = 0, len = str.length, c;
+    for(i = 0; i < len; i++) {
+      c = str.charCodeAt(i);
+      if (c >= 0x0001 && c <= 0x007F) out += str.charAt(i);
+      else if (c > 0x07FF) {
+        out += String.fromCharCode(0xE0 | ((c >> 12) & 0x0F));
+        out += String.fromCharCode(0x80 | ((c >>  6) & 0x3F));
+        out += String.fromCharCode(0x80 | ((c >>  0) & 0x3F));
+      } else {
+        out += String.fromCharCode(0xC0 | ((c >>  6) & 0x1F));
+        out += String.fromCharCode(0x80 | ((c >>  0) & 0x3F));
+      }
     }
+    return out;
+  },
+
+  // Useful for QR generation: if pure ASCII, don’t transform at all.
+  maybeUtf8ForQr: (str) => {
+    str = String(str || '');
+    return /[^\x00-\x7F]/.test(str) ? Utils.utf16to8(str) : str;
+  }
 };
 
 /**
- * VCARD PARSER/GENERATOR
- * - Parses vCard 2.1/3.0 reasonably.
- * - Generates vCard 2.1 by default for QR + exports (Android-friendly).
- * - TEL types are normalized so PREF is never the only qualifier (fixes Android ignoring phone fields).
+ * VCARD ENGINE
  */
 class VCardEngine {
-    static parse(content) {
-        const contacts = [];
-        let normalized = String(content || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  static parse(content) {
+    const contacts = [];
+    let normalized = String(content || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-        // Unfold lines (RFC-ish): lines beginning with space/tab continue previous line
-        const lines = [];
-        normalized.split('\n').forEach(line => {
-            if (!line) return;
-            if ((line.startsWith(' ') || line.startsWith('\t')) && lines.length > 0) {
-                lines[lines.length - 1] += line.substring(1);
-            } else {
-                lines.push(line);
-            }
-        });
+    // Unfold lines
+    const lines = [];
+    normalized.split('\n').forEach(line => {
+      if (!line) return;
+      if ((line.startsWith(' ') || line.startsWith('\t')) && lines.length > 0) lines[lines.length - 1] += line.substring(1);
+      else lines.push(line);
+    });
 
-        let currentContact = null;
+    let currentContact = null;
 
-        lines.forEach(rawLine => {
-            const line = rawLine.trimEnd();
+    lines.forEach(rawLine => {
+      const line = rawLine.trimEnd();
 
-            if (line.toUpperCase().startsWith('BEGIN:VCARD')) {
-                currentContact = {
-                    id: Utils.generateId(),
-                    fn: '',
-                    n: '',
-                    tels: [],
-                    emails: [],
-                    org: '',
-                    title: '',
-                    adr: '',
-                    note: '',
-                    photo: null,
-                    version: '3.0'
-                };
-                return;
-            }
-
-            if (line.toUpperCase().startsWith('END:VCARD')) {
-                if (currentContact) {
-                    if (!currentContact.fn && currentContact.n) currentContact.fn = currentContact.n.replace(/;/g, ' ').trim();
-                    if (!currentContact.fn) currentContact.fn = 'Unknown Contact';
-                    contacts.push(currentContact);
-                    currentContact = null;
-                }
-                return;
-            }
-
-            if (!currentContact) return;
-
-            const colonIndex = line.indexOf(':');
-            if (colonIndex === -1) return;
-
-            let keyPart = line.substring(0, colonIndex);
-            let value = line.substring(colonIndex + 1);
-
-            let [key, ...params] = keyPart.split(';');
-            key = key.toUpperCase().trim();
-            params = params.map(p => (p || '').trim());
-
-            // Quoted-printable decode if present
-            if (params.some(p => p.toUpperCase().includes('QUOTED-PRINTABLE'))) {
-                value = Utils.decodeQP(value);
-            }
-
-            switch (key) {
-                case 'VERSION':
-                    currentContact.version = value.trim();
-                    break;
-
-                case 'FN':
-                    currentContact.fn = value;
-                    break;
-
-                case 'N':
-                    currentContact.n = value;
-                    break;
-
-                case 'ORG':
-                    currentContact.org = value.replace(/;/g, ' ');
-                    break;
-
-                case 'TITLE':
-                    currentContact.title = value;
-                    break;
-
-                case 'NOTE':
-                    currentContact.note = value.replace(/\\n/g, '\n');
-                    break;
-
-                case 'EMAIL':
-                    currentContact.emails.push({ value: value, type: this.extractType(params, 'EMAIL') });
-                    break;
-
-                case 'TEL':
-                    currentContact.tels.push({ value: Utils.cleanPhoneNumber(value), type: this.extractType(params, 'TEL') });
-                    break;
-
-                case 'ADR':
-                    currentContact.adr = value.split(';').filter(p => p.trim()).join(', ');
-                    break;
-
-                case 'PHOTO': {
-                    const isBase64 = params.some(p => p.toUpperCase().includes('ENCODING=B') || p.toUpperCase().includes('BASE64'));
-                    if (isBase64) {
-                        currentContact.photo = value.replace(/\s/g, '');
-                        if (!currentContact.photo.startsWith('data:image')) {
-                            const typeParam = params.find(p => p.toUpperCase().startsWith('TYPE='));
-                            const imgType = typeParam ? typeParam.split('=')[1] : 'jpeg';
-                            currentContact.photo = `data:image/${imgType};base64,${currentContact.photo}`;
-                        }
-                    }
-                    break;
-                }
-            }
-        });
-
-        return contacts;
-    }
-
-    static extractType(params, kind = 'GENERIC') {
-        // Collect TYPE tokens from both "TYPE=..." and bare tokens
-        const tokens = [];
-        (params || []).forEach(p => {
-            const up = (p || '').toUpperCase().trim();
-            if (!up) return;
-            if (up.startsWith('TYPE=')) {
-                up.substring(5).split(',').forEach(t => tokens.push((t || '').trim()));
-            } else {
-                tokens.push(up);
-            }
-        });
-
-        if (kind === 'TEL') return this.normalizeTelTypes(tokens);
-
-        // Email/Generic fallback
-        const typeParam = (params || []).find(p => (p || '').toUpperCase().startsWith('TYPE='));
-        if (typeParam) return typeParam.split('=')[1].toUpperCase();
-
-        return ['CELL', 'WORK', 'HOME', 'INTERNET', 'VOICE', 'FAX'].find(t =>
-            (params || []).some(p => (p || '').toUpperCase().includes(t))
-        ) || 'OTHER';
-    }
-
-    static normalizeTelTypes(tokens) {
-        // Normalize + keep PREF only as an add-on, never alone
-        const set = new Set();
-
-        for (let t of (tokens || [])) {
-            t = (t || '').toUpperCase().replace(/"/g, '').trim();
-            if (!t) continue;
-
-            // Common aliases
-            if (t === 'MOBILE') t = 'CELL';
-            if (t === 'MAIN') t = 'VOICE';
-
-            if (t === 'PREF') { set.add('PREF'); continue; }
-            if (['CELL', 'WORK', 'HOME', 'VOICE', 'FAX'].includes(t)) set.add(t);
+      if (line.toUpperCase().startsWith('BEGIN:VCARD')) {
+        currentContact = { id: Utils.generateId(), fn:'', n:'', tels:[], emails:[], org:'', title:'', adr:'', note:'', photo:null, version:'3.0' };
+        return;
+      }
+      if (line.toUpperCase().startsWith('END:VCARD')) {
+        if (currentContact) {
+          if (!currentContact.fn && currentContact.n) currentContact.fn = currentContact.n.replace(/;/g,' ').trim();
+          if (!currentContact.fn) currentContact.fn = 'Unknown Contact';
+          contacts.push(currentContact);
+          currentContact = null;
         }
+        return;
+      }
+      if (!currentContact) return;
 
-        // If we only got PREF (or nothing), force a real type so Android imports it
-        const hasRealType = [...set].some(x => ['CELL', 'WORK', 'HOME', 'VOICE', 'FAX'].includes(x));
-        if (!hasRealType) set.add('CELL');
+      const colonIndex = line.indexOf(':');
+      if (colonIndex === -1) return;
 
-        // Stable ordering
-        const order = ['CELL', 'WORK', 'HOME', 'VOICE', 'FAX', 'PREF'];
-        return order.filter(x => set.has(x)).join(',');
-    }
+      let keyPart = line.substring(0, colonIndex);
+      let value = line.substring(colonIndex + 1);
 
-    static buildNFromFN(fn) {
-        const parts = String(fn || '').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
-        const last = parts.length > 1 ? parts.pop() : '';
-        const first = parts.join(' ');
-        return `${last};${first};;;`;
-    }
+      let [key, ...params] = keyPart.split(';');
+      key = key.toUpperCase().trim();
+      params = params.map(p => (p || '').trim());
 
-    static sanitizeForVCardValue(val) {
-        // vCard 2.1 is more tolerant; still avoid raw CR/LF in values
-        return String(val || '').replace(/\r?\n/g, '\\n');
-    }
+      if (params.some(p => p.toUpperCase().includes('QUOTED-PRINTABLE'))) value = Utils.decodeQP(value);
 
-    static generate(contacts, single = false, opts = {}) {
-        const version = String(opts.version || VCARD_DEFAULT_VERSION).trim() || '2.1';
-        const EOL = '\r\n';
-
-        let vcf = '';
-        const list = single ? [contacts] : contacts;
-
-        list.forEach(c => {
-            vcf += 'BEGIN:VCARD' + EOL;
-            vcf += `VERSION:${version}` + EOL;
-
-            const fn = (c && c.fn) ? String(c.fn) : '';
-            const n = (c && c.n && String(c.n).includes(';')) ? String(c.n) : this.buildNFromFN(fn);
-
-            // vCard 2.1: add CHARSET=UTF-8 for better non-ASCII handling on Android
-            if (version === '2.1') {
-                vcf += `N;CHARSET=UTF-8:${n}` + EOL;
-                vcf += `FN;CHARSET=UTF-8:${this.sanitizeForVCardValue(fn)}` + EOL;
-                if (c.org)   vcf += `ORG;CHARSET=UTF-8:${this.sanitizeForVCardValue(String(c.org).replace(/;/g, ' '))}` + EOL;
-                if (c.title) vcf += `TITLE;CHARSET=UTF-8:${this.sanitizeForVCardValue(c.title)}` + EOL;
-                if (c.note)  vcf += `NOTE;CHARSET=UTF-8:${this.sanitizeForVCardValue(c.note)}` + EOL;
-                if (c.adr)   vcf += `ADR;HOME;CHARSET=UTF-8:;;${this.sanitizeForVCardValue(c.adr)};;;;` + EOL;
-            } else {
-                // vCard 3.0+
-                vcf += `N:${n}` + EOL;
-                vcf += `FN:${this.sanitizeForVCardValue(fn)}` + EOL;
-                if (c.org)   vcf += `ORG:${this.sanitizeForVCardValue(String(c.org).replace(/;/g, ' '))}` + EOL;
-                if (c.title) vcf += `TITLE:${this.sanitizeForVCardValue(c.title)}` + EOL;
-                if (c.note)  vcf += `NOTE:${this.sanitizeForVCardValue(c.note)}` + EOL;
-                if (c.adr)   vcf += `ADR;TYPE=HOME:;;${this.sanitizeForVCardValue(c.adr)};;;;` + EOL;
+      switch (key) {
+        case 'VERSION': currentContact.version = value.trim(); break;
+        case 'FN': currentContact.fn = value; break;
+        case 'N': currentContact.n = value; break;
+        case 'ORG': currentContact.org = value.replace(/;/g,' '); break;
+        case 'TITLE': currentContact.title = value; break;
+        case 'NOTE': currentContact.note = value.replace(/\\n/g,'\n'); break;
+        case 'EMAIL': currentContact.emails.push({ value, type: this.extractType(params, 'EMAIL') }); break;
+        case 'TEL': currentContact.tels.push({ value: Utils.cleanPhoneNumber(value), type: this.extractType(params, 'TEL') }); break;
+        case 'ADR': currentContact.adr = value.split(';').filter(p => p.trim()).join(', '); break;
+        case 'PHOTO': {
+          const isBase64 = params.some(p => p.toUpperCase().includes('ENCODING=B') || p.toUpperCase().includes('BASE64'));
+          if (isBase64) {
+            currentContact.photo = value.replace(/\s/g,'');
+            if (!currentContact.photo.startsWith('data:image')) {
+              const typeParam = params.find(p => p.toUpperCase().startsWith('TYPE='));
+              const imgType = typeParam ? typeParam.split('=')[1] : 'jpeg';
+              currentContact.photo = `data:image/${imgType};base64,${currentContact.photo}`;
             }
+          }
+          break;
+        }
+      }
+    });
 
-            // TEL: Ensure Android sees a real type (CELL/WORK/HOME/VOICE...) even if PREF is present
-            (c.tels || []).forEach(t => {
-                const num = (t && t.value) ? String(t.value) : '';
-                if (!num) return;
+    return contacts;
+  }
 
-                const normalized = this.normalizeTelTypes(String(t.type || 'CELL').split(','));
-                const parts = normalized.split(',').filter(Boolean);
+  static extractType(params, kind='GENERIC') {
+    // Collect TYPE tokens from both "TYPE=..." and bare tokens (2.1 style)
+    const tokens = [];
+    (params || []).forEach(p => {
+      const up = (p || '').toUpperCase().trim();
+      if (!up) return;
+      if (up.startsWith('TYPE=')) up.substring(5).split(',').forEach(t => tokens.push((t||'').trim()));
+      else tokens.push(up);
+    });
 
-                if (version === '2.1') {
-                    // v2.1 style: TEL;CELL;PREF:+...
-                    // Convert comma list into semicolon params.
-                    // If only PREF somehow, normalizeTelTypes already forces CELL.
-                    const params = parts.join(';');
-                    vcf += `TEL;${params}:${num}` + EOL;
-                } else {
-                    // v3.0 style: TEL;TYPE=CELL,PREF:+...
-                    vcf += `TEL;TYPE=${parts.join(',')}:${num}` + EOL;
-                }
-            });
+    if (kind === 'TEL') return this.normalizeTelTypes(tokens);
 
-            // EMAIL
-            (c.emails || []).forEach(e => {
-                const mail = (e && e.value) ? String(e.value) : '';
-                if (!mail) return;
+    const typeParam = (params || []).find(p => (p || '').toUpperCase().startsWith('TYPE='));
+    if (typeParam) return typeParam.split('=')[1].toUpperCase();
 
-                if (version === '2.1') {
-                    // Common v2.1 pattern
-                    vcf += `EMAIL;INTERNET:${mail}` + EOL;
-                } else {
-                    vcf += `EMAIL;TYPE=${(e.type || 'INTERNET')}:${mail}` + EOL;
-                }
-            });
+    return ['INTERNET','WORK','HOME','CELL','VOICE','FAX'].find(t => (params||[]).some(p => (p||'').toUpperCase().includes(t))) || 'OTHER';
+  }
 
-            // PHOTO (kept as-is; many Android importers ignore via QR anyway)
-            if (c.photo && String(c.photo).startsWith('data:image')) {
-                vcf += `PHOTO;ENCODING=b;TYPE=JPEG:${String(c.photo).split(',')[1]}` + EOL;
-            }
+  static normalizeTelTypes(tokens) {
+    const set = new Set();
+    for (let t of (tokens || [])) {
+      t = (t || '').toUpperCase().replace(/"/g,'').trim();
+      if (!t) continue;
+      if (t === 'MOBILE') t = 'CELL';
+      if (t === 'MAIN') t = 'VOICE';
+      if (t === 'PREF') { set.add('PREF'); continue; }
+      if (['CELL','WORK','HOME','VOICE','FAX'].includes(t)) set.add(t);
+    }
+    const hasRealType = [...set].some(x => ['CELL','WORK','HOME','VOICE','FAX'].includes(x));
+    if (!hasRealType) set.add('CELL');
+    const order = ['CELL','WORK','HOME','VOICE','FAX','PREF'];
+    return order.filter(x => set.has(x)).join(',');
+  }
 
-            vcf += 'END:VCARD' + EOL;
+  static buildNFromFN(fn) {
+    const parts = String(fn || '').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);
+    const family = parts.length > 1 ? parts.pop() : '';
+    const given = parts.join(' ');
+    return `${family};${given};;;`; // Family;Given;Additional;Prefix;Suffix
+  }
+
+  // For QR: produce a minimal, plain vCard 2.1 that Android parsers actually populate.
+  // Key choices:
+  // - No CHARSET params (many camera parsers choke)
+  // - No multi-param TEL combos (VOICE/PREF etc)
+  // - Minimal fields only (FN, N, TEL, EMAIL, ORG, TITLE)
+  static generateForQr(contact) {
+    const EOL = '\n';
+    const c = contact || {};
+
+    // Optional heuristic: if FN contains "ORG | PERSON", keep FN but ensure N is derived from the PERSON part.
+    const fnRaw = String(c.fn || '').trim();
+    let personForN = fnRaw;
+    let org = String(c.org || '').trim();
+
+    if (fnRaw.includes('|')) {
+      const parts = fnRaw.split('|').map(s => s.trim()).filter(Boolean);
+      if (parts.length >= 2) {
+        const left = parts.slice(0, parts.length - 1).join(' | ').trim();
+        const right = parts[parts.length - 1].trim();
+        // If ORG missing, infer it; but keep FN as original display name
+        if (!org && left) org = left;
+        if (right) personForN = right;
+      }
+    }
+
+    const nLine = (c.n && String(c.n).includes(';')) ? String(c.n) : this.buildNFromFN(personForN || fnRaw);
+
+    const lines = [];
+    lines.push('BEGIN:VCARD');
+    lines.push('VERSION:2.1');
+
+    // Plain N/FN
+    lines.push(`N:${nLine}`);
+    if (fnRaw) lines.push(`FN:${fnRaw}`);
+
+    if (org) lines.push(`ORG:${org}`);
+    if (c.title) lines.push(`TITLE:${String(c.title).replace(/\r?\n/g,' ')}`);
+
+    // TEL: emit extremely compatible v2.1: TEL;CELL:+..., no VOICE/PREF combos.
+    const tels = Array.isArray(c.tels) ? c.tels : [];
+    for (const t of tels) {
+      const num = String(t?.value || '').trim();
+      if (!num) continue;
+
+      // Choose ONE type only (WORK/HOME/CELL/VOICE). Avoid pref/voice combos.
+      const types = this.normalizeTelTypes(String(t?.type || 'CELL').split(',')).split(',').filter(Boolean);
+      const chosen = types.includes('WORK') ? 'WORK'
+                   : types.includes('HOME') ? 'HOME'
+                   : types.includes('CELL') ? 'CELL'
+                   : types.includes('VOICE') ? 'VOICE'
+                   : '';
+
+      if (chosen) lines.push(`TEL;${chosen}:${num}`);
+      else lines.push(`TEL:${num}`);
+    }
+
+    // EMAIL: keep simple
+    const emails = Array.isArray(c.emails) ? c.emails : [];
+    for (const e of emails) {
+      const mail = String(e?.value || '').trim();
+      if (!mail) continue;
+      lines.push(`EMAIL:${mail}`);
+    }
+
+    lines.push('END:VCARD');
+
+    // IMPORTANT: no trailing spaces; join with \n
+    return lines.join(EOL);
+  }
+
+  // For file export: still vCard 2.1 default, but CRLF line endings (spec-friendly).
+  static generate(contacts, single = false, opts = {}) {
+    const version = String(opts.version || VCARD_DEFAULT_VERSION).trim() || '2.1';
+    const EOL = opts.eol || '\r\n';
+
+    let vcf = '';
+    const list = single ? [contacts] : contacts;
+
+    list.forEach(c => {
+      const fn = String(c?.fn || '').trim();
+      const n = (c?.n && String(c.n).includes(';')) ? String(c.n) : this.buildNFromFN(fn);
+
+      vcf += 'BEGIN:VCARD' + EOL;
+      vcf += `VERSION:${version}` + EOL;
+
+      if (version === '2.1') {
+        // IMPORTANT: keep simple (no CHARSET params) for widest importer compatibility
+        vcf += `N:${n}` + EOL;
+        if (fn) vcf += `FN:${fn.replace(/\r?\n/g,' ')}` + EOL;
+        if (c?.org) vcf += `ORG:${String(c.org).replace(/;/g,' ').replace(/\r?\n/g,' ')}` + EOL;
+        if (c?.title) vcf += `TITLE:${String(c.title).replace(/\r?\n/g,' ')}` + EOL;
+        if (c?.note) vcf += `NOTE:${String(c.note).replace(/\r?\n/g,'\\n')}` + EOL;
+        if (c?.adr) vcf += `ADR;HOME:;;${String(c.adr).replace(/\r?\n/g,' ')};;;;` + EOL;
+
+        // TEL: exporter can include 1 type param, but avoid multi-param noise.
+        (c?.tels || []).forEach(t => {
+          const num = String(t?.value || '').trim();
+          if (!num) return;
+          const types = this.normalizeTelTypes(String(t?.type || 'CELL').split(',')).split(',').filter(Boolean);
+          const chosen = types.includes('WORK') ? 'WORK'
+                       : types.includes('HOME') ? 'HOME'
+                       : types.includes('CELL') ? 'CELL'
+                       : types.includes('VOICE') ? 'VOICE'
+                       : '';
+          if (chosen) vcf += `TEL;${chosen}:${num}` + EOL;
+          else vcf += `TEL:${num}` + EOL;
         });
 
-        return vcf;
-    }
+        (c?.emails || []).forEach(e => {
+          const mail = String(e?.value || '').trim();
+          if (!mail) return;
+          vcf += `EMAIL:${mail}` + EOL;
+        });
+
+      } else {
+        // v3.0+
+        vcf += `N:${n}` + EOL;
+        if (fn) vcf += `FN:${fn.replace(/\r?\n/g,' ')}` + EOL;
+        if (c?.org) vcf += `ORG:${String(c.org).replace(/;/g,' ').replace(/\r?\n/g,' ')}` + EOL;
+        if (c?.title) vcf += `TITLE:${String(c.title).replace(/\r?\n/g,' ')}` + EOL;
+        if (c?.note) vcf += `NOTE:${String(c.note).replace(/\r?\n/g,'\\n')}` + EOL;
+        if (c?.adr) vcf += `ADR;TYPE=HOME:;;${String(c.adr).replace(/\r?\n/g,' ')};;;;` + EOL;
+
+        (c?.tels || []).forEach(t => {
+          const num = String(t?.value || '').trim();
+          if (!num) return;
+          const types = this.normalizeTelTypes(String(t?.type || 'CELL').split(','));
+          vcf += `TEL;TYPE=${types}:${num}` + EOL;
+        });
+
+        (c?.emails || []).forEach(e => {
+          const mail = String(e?.value || '').trim();
+          if (!mail) return;
+          vcf += `EMAIL;TYPE=${(e.type || 'INTERNET')}:${mail}` + EOL;
+        });
+      }
+
+      if (c?.photo && String(c.photo).startsWith('data:image')) {
+        vcf += `PHOTO;ENCODING=b;TYPE=JPEG:${String(c.photo).split(',')[1]}` + EOL;
+      }
+
+      vcf += 'END:VCARD' + EOL;
+    });
+
+    return vcf;
+  }
 }
 
 /**
  * APPLICATION LOGIC
  */
 class App {
-    constructor() {
-        this.state = {
-            contacts: [],
-            filteredContacts: [],
-            selectedIds: new Set(),
-            isSelectionMode: false,
-            sort: { key: 'fn', dir: 'asc' },
-            pagination: { page: 1, limit: 50 },
-            theme: localStorage.getItem('theme') || 'dark',
-            columns: {
-                fn: { label: 'Name', visible: true, locked: true },
-                tel: { label: 'Phone', visible: true, locked: false },
-                email: { label: 'Email', visible: true, locked: false },
-                org: { label: 'Organization', visible: true, locked: false },
-                note: { label: 'Notes', visible: true, locked: false },
-                title: { label: 'Title', visible: false, locked: false },
-                adr: { label: 'Address', visible: false, locked: false }
-            },
-            editingNoteId: null,
-            activeActionContact: null
-        };
-        this.init();
-    }
+  constructor() {
+    this.state = {
+      contacts: [],
+      filteredContacts: [],
+      selectedIds: new Set(),
+      isSelectionMode: false,
+      sort: { key: 'fn', dir: 'asc' },
+      pagination: { page: 1, limit: 50 },
+      theme: localStorage.getItem('theme') || 'dark',
+      columns: {
+        fn: { label: 'Name', visible: true, locked: true },
+        tel: { label: 'Phone', visible: true, locked: false },
+        email: { label: 'Email', visible: true, locked: false },
+        org: { label: 'Organization', visible: true, locked: false },
+        note: { label: 'Notes', visible: true, locked: false },
+        title: { label: 'Title', visible: false, locked: false },
+        adr: { label: 'Address', visible: false, locked: false }
+      },
+      editingNoteId: null,
+      activeActionContact: null
+    };
+    this.init();
+  }
 
-    init() {
-        this.applyTheme();
-        this.setupEventListeners();
-        this.render();
-        
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('#column-context-menu')) document.getElementById('column-context-menu').classList.add('hidden');
-            if (!e.target.closest('#batch-actions-btn') && !e.target.closest('#batch-menu')) document.getElementById('batch-menu').classList.add('hidden');
-            
-            // Auto-save note on blur (click away)
-            if (this.state.editingNoteId && !e.target.closest('.inline-editor') && !e.target.closest('.note-cell')) {
-                this.saveInlineEdit(this.state.editingNoteId);
-            }
-        });
-    }
+  init() {
+    this.applyTheme();
+    this.setupEventListeners();
+    this.render();
 
-    setupEventListeners() {
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file'; fileInput.id = 'hidden-file-input'; fileInput.accept = '.vcf,.vcard'; fileInput.hidden = true;
-        document.body.appendChild(fileInput);
-        fileInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#column-context-menu')) document.getElementById('column-context-menu').classList.add('hidden');
+      if (!e.target.closest('#batch-actions-btn') && !e.target.closest('#batch-menu')) document.getElementById('batch-menu').classList.add('hidden');
+      if (this.state.editingNoteId && !e.target.closest('.inline-editor') && !e.target.closest('.note-cell')) this.saveInlineEdit(this.state.editingNoteId);
+    });
+  }
 
-        window.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
-        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('active'); });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault(); dropZone.classList.remove('active');
-            if (e.dataTransfer.files.length) this.handleFile(e.dataTransfer.files[0]);
-        });
+  setupEventListeners() {
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file'; fileInput.id = 'hidden-file-input'; fileInput.accept = '.vcf,.vcard'; fileInput.hidden = true;
+    document.body.appendChild(fileInput);
+    fileInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
 
-        document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
-        document.getElementById('contact-table').addEventListener('contextmenu', (e) => {
-            if (e.target.tagName === 'TH') { e.preventDefault(); this.showColumnContextMenu(e.clientX, e.clientY); }
-        });
-    }
+    window.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
+    dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('active'); });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault(); dropZone.classList.remove('active');
+      if (e.dataTransfer.files.length) this.handleFile(e.dataTransfer.files[0]);
+    });
 
-    handleFile(file) {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const newContacts = VCardEngine.parse(e.target.result);
-                if (newContacts.length === 0) throw new Error("No contacts found");
-                this.state.contacts = [...this.state.contacts, ...newContacts];
-                this.showToast(`Imported ${newContacts.length} contacts`, 'success');
-                this.refreshData();
-            } catch (err) { 
-                console.error(err);
-                this.showToast('Failed to parse VCF', 'error'); 
-            }
-        };
-        reader.readAsText(file);
-    }
+    document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
+    document.getElementById('contact-table').addEventListener('contextmenu', (e) => {
+      if (e.target.tagName === 'TH') { e.preventDefault(); this.showColumnContextMenu(e.clientX, e.clientY); }
+    });
+  }
 
-    handleSearch(val) {
-        this.state.pagination.page = 1;
-        const q = String(val || '').toLowerCase();
-        if (!q) this.state.filteredContacts = [...this.state.contacts];
-        else {
-            this.state.filteredContacts = this.state.contacts.filter(c => 
-                `${c.fn} ${c.org} ${(c.emails||[]).map(e=>e.value).join(' ')} ${(c.tels||[]).map(t=>t.value).join(' ')} ${c.note}`.toLowerCase().includes(q)
-            );
-        }
-        this.sortData();
-        this.renderTable();
-    }
-
-    sort(key) {
-        if (this.state.sort.key === key) this.state.sort.dir = this.state.sort.dir === 'asc' ? 'desc' : 'asc';
-        else { this.state.sort.key = key; this.state.sort.dir = 'asc'; }
-        this.sortData();
-        this.renderTable();
-    }
-
-    sortData() {
-        const { key, dir } = this.state.sort;
-        this.state.filteredContacts.sort((a, b) => {
-            let valA = '', valB = '';
-            if (key === 'tel') { valA = a.tels[0]?.value || ''; valB = b.tels[0]?.value || ''; }
-            else if (key === 'email') { valA = a.emails[0]?.value || ''; valB = b.emails[0]?.value || ''; }
-            else { valA = (a[key] || '').toString(); valB = (b[key] || '').toString(); }
-            return dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
-        });
-    }
-
-    refreshData() {
-        this.state.filteredContacts = [...this.state.contacts];
-        const searchVal = document.getElementById('search-input')?.value || '';
-        if(searchVal) this.handleSearch(searchVal);
-        else { this.sortData(); this.render(); }
-    }
-
-    toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
-
-    showColumnContextMenu(x, y) {
-        const menu = document.getElementById('column-context-menu');
-        menu.innerHTML = '';
-        Object.entries(this.state.columns).forEach(([key, col]) => {
-            if (col.locked) return;
-            const item = document.createElement('div');
-            item.className = 'context-menu-item';
-            item.innerHTML = `<input type="checkbox" ${col.visible ? 'checked' : ''}> ${col.label}`;
-            item.onclick = (e) => {
-                e.stopPropagation();
-                this.state.columns[key].visible = !this.state.columns[key].visible;
-                this.renderTable();
-            };
-            menu.appendChild(item);
-        });
-        menu.style.left = x + 'px'; menu.style.top = y + 'px'; menu.classList.remove('hidden');
-    }
-
-    toggleSelectionMode(active) {
-        this.state.isSelectionMode = active;
-        if (!active) this.state.selectedIds.clear();
-        this.renderToolbar();
-        this.renderTable();
-    }
-
-    toggleSelectAll() {
-        if (this.state.selectedIds.size === this.state.filteredContacts.length) this.state.selectedIds.clear();
-        else this.state.filteredContacts.forEach(c => this.state.selectedIds.add(c.id));
-        this.renderTable();
-        this.updateBatchButton();
-    }
-
-    toggleSelection(id) {
-        if (this.state.selectedIds.has(id)) this.state.selectedIds.delete(id);
-        else this.state.selectedIds.add(id);
-        this.updateBatchButton();
-    }
-
-    updateBatchButton() {
-        const btn = document.getElementById('batch-actions-btn');
-        if (btn && this.state.isSelectionMode) btn.textContent = `Actions (${this.state.selectedIds.size}) ▾`;
-    }
-
-    toggleBatchMenu() {
-        const menu = document.getElementById('batch-menu');
-        menu.classList.toggle('hidden');
-        menu.innerHTML = '';
-
-        const itemExportAll = document.createElement('div');
-        itemExportAll.className = 'context-menu-item';
-        itemExportAll.innerHTML = `📥 Export All (${this.state.filteredContacts.length})`;
-        itemExportAll.onclick = () => this.exportAll();
-        menu.appendChild(itemExportAll);
-
-        if (this.state.isSelectionMode && this.state.selectedIds.size > 0) {
-            const itemExpSel = document.createElement('div');
-            itemExpSel.className = 'context-menu-item';
-            itemExpSel.innerHTML = `📥 Export Selected (${this.state.selectedIds.size})`;
-            itemExpSel.onclick = () => this.exportSelected();
-            menu.appendChild(itemExpSel);
-
-            const itemDel = document.createElement('div');
-            itemDel.className = 'context-menu-item';
-            itemDel.style.color = 'var(--danger)';
-            itemDel.innerHTML = `🗑️ Delete Selected (${this.state.selectedIds.size})`;
-            itemDel.onclick = () => this.deleteSelected();
-            menu.appendChild(itemDel);
-        }
-    }
-
-    deleteSelected() {
-        if (!confirm(`Delete ${this.state.selectedIds.size} contacts?`)) return;
-        this.state.contacts = this.state.contacts.filter(c => !this.state.selectedIds.has(c.id));
-        this.state.selectedIds.clear();
-        this.toggleSelectionMode(false);
+  handleFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const newContacts = VCardEngine.parse(e.target.result);
+        if (newContacts.length === 0) throw new Error("No contacts found");
+        this.state.contacts = [...this.state.contacts, ...newContacts];
+        this.showToast(`Imported ${newContacts.length} contacts`, 'success');
         this.refreshData();
-        this.showToast('Contacts deleted', 'success');
-    }
+      } catch (err) {
+        console.error(err);
+        this.showToast('Failed to parse VCF', 'error');
+      }
+    };
+    reader.readAsText(file);
+  }
 
-    exportSelected() {
-        const selected = this.state.contacts.filter(c => this.state.selectedIds.has(c.id));
-        this.downloadVCF(selected);
+  handleSearch(val) {
+    this.state.pagination.page = 1;
+    const q = String(val || '').toLowerCase();
+    if (!q) this.state.filteredContacts = [...this.state.contacts];
+    else {
+      this.state.filteredContacts = this.state.contacts.filter(c =>
+        `${c.fn} ${c.org} ${(c.emails||[]).map(e=>e.value).join(' ')} ${(c.tels||[]).map(t=>t.value).join(' ')} ${c.note}`.toLowerCase().includes(q)
+      );
     }
-    exportAll() { this.downloadVCF(this.state.filteredContacts); }
+    this.sortData();
+    this.renderTable();
+  }
 
-    // --- Inline Note Editing ---
-    startInlineEdit(id) {
-        if (this.state.editingNoteId === id) return;
-        if (this.state.editingNoteId) this.saveInlineEdit(this.state.editingNoteId);
-        this.state.editingNoteId = id;
+  sort(key) {
+    if (this.state.sort.key === key) this.state.sort.dir = this.state.sort.dir === 'asc' ? 'desc' : 'asc';
+    else { this.state.sort.key = key; this.state.sort.dir = 'asc'; }
+    this.sortData();
+    this.renderTable();
+  }
+
+  sortData() {
+    const { key, dir } = this.state.sort;
+    this.state.filteredContacts.sort((a, b) => {
+      let valA = '', valB = '';
+      if (key === 'tel') { valA = a.tels[0]?.value || ''; valB = b.tels[0]?.value || ''; }
+      else if (key === 'email') { valA = a.emails[0]?.value || ''; valB = b.emails[0]?.value || ''; }
+      else { valA = (a[key] || '').toString(); valB = (b[key] || '').toString(); }
+      return dir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+    });
+  }
+
+  refreshData() {
+    this.state.filteredContacts = [...this.state.contacts];
+    const searchVal = document.getElementById('search-input')?.value || '';
+    if (searchVal) this.handleSearch(searchVal);
+    else { this.sortData(); this.render(); }
+  }
+
+  toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+
+  showColumnContextMenu(x, y) {
+    const menu = document.getElementById('column-context-menu');
+    menu.innerHTML = '';
+    Object.entries(this.state.columns).forEach(([key, col]) => {
+      if (col.locked) return;
+      const item = document.createElement('div');
+      item.className = 'context-menu-item';
+      item.innerHTML = `<input type="checkbox" ${col.visible ? 'checked' : ''}> ${col.label}`;
+      item.onclick = (e) => {
+        e.stopPropagation();
+        this.state.columns[key].visible = !this.state.columns[key].visible;
         this.renderTable();
-        setTimeout(() => {
-            const el = document.getElementById(`note-edit-${id}`);
-            if (el) { 
-                el.focus(); 
-                el.setSelectionRange(el.value.length, el.value.length); 
-                el.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        this.saveInlineEdit(id);
-                    }
-                });
-            }
-        }, 50);
+      };
+      menu.appendChild(item);
+    });
+    menu.style.left = x + 'px'; menu.style.top = y + 'px'; menu.classList.remove('hidden');
+  }
+
+  toggleSelectionMode(active) {
+    this.state.isSelectionMode = active;
+    if (!active) this.state.selectedIds.clear();
+    this.renderToolbar();
+    this.renderTable();
+  }
+
+  toggleSelectAll() {
+    if (this.state.selectedIds.size === this.state.filteredContacts.length) this.state.selectedIds.clear();
+    else this.state.filteredContacts.forEach(c => this.state.selectedIds.add(c.id));
+    this.renderTable();
+    this.updateBatchButton();
+  }
+
+  toggleSelection(id) {
+    if (this.state.selectedIds.has(id)) this.state.selectedIds.delete(id);
+    else this.state.selectedIds.add(id);
+    this.updateBatchButton();
+  }
+
+  updateBatchButton() {
+    const btn = document.getElementById('batch-actions-btn');
+    if (btn && this.state.isSelectionMode) btn.textContent = `Actions (${this.state.selectedIds.size}) ▾`;
+  }
+
+  toggleBatchMenu() {
+    const menu = document.getElementById('batch-menu');
+    menu.classList.toggle('hidden');
+    menu.innerHTML = '';
+
+    const itemExportAll = document.createElement('div');
+    itemExportAll.className = 'context-menu-item';
+    itemExportAll.innerHTML = `📥 Export All (${this.state.filteredContacts.length})`;
+    itemExportAll.onclick = () => this.exportAll();
+    menu.appendChild(itemExportAll);
+
+    if (this.state.isSelectionMode && this.state.selectedIds.size > 0) {
+      const itemExpSel = document.createElement('div');
+      itemExpSel.className = 'context-menu-item';
+      itemExpSel.innerHTML = `📥 Export Selected (${this.state.selectedIds.size})`;
+      itemExpSel.onclick = () => this.exportSelected();
+      menu.appendChild(itemExpSel);
+
+      const itemDel = document.createElement('div');
+      itemDel.className = 'context-menu-item';
+      itemDel.style.color = 'var(--danger)';
+      itemDel.innerHTML = `🗑️ Delete Selected (${this.state.selectedIds.size})`;
+      itemDel.onclick = () => this.deleteSelected();
+      menu.appendChild(itemDel);
     }
-    
-    saveInlineEdit(id) {
-        const el = document.getElementById(`note-edit-${id}`);
-        if (!el) {
-            this.state.editingNoteId = null;
-            return;
-        }
-        
-        const val = el.value;
-        const c = this.state.contacts.find(x => x.id === id);
-        
-        if (c && c.note !== val) { 
-            c.note = val; 
-            this.showToast('Note saved', 'success'); 
-        }
-        
-        this.state.editingNoteId = null;
-        this.renderTable();
-    }
+  }
 
-    // --- Action Modal (QR) ---
-    openActionModal(id, initialTab = 'contact') {
-        const c = this.state.contacts.find(x => x.id === id);
-        if (!c) return;
-        this.state.activeActionContact = c;
-        document.getElementById('action-modal-overlay').classList.add('active');
-        this.renderActionTabs();
+  deleteSelected() {
+    if (!confirm(`Delete ${this.state.selectedIds.size} contacts?`)) return;
+    this.state.contacts = this.state.contacts.filter(c => !this.state.selectedIds.has(c.id));
+    this.state.selectedIds.clear();
+    this.toggleSelectionMode(false);
+    this.refreshData();
+    this.showToast('Contacts deleted', 'success');
+  }
 
-        // Respect requested tab if it exists; otherwise default to vCard
-        const possibleTabs = new Set(['contact']);
-        if (c.tels && c.tels.length) possibleTabs.add('phone');
-        if (c.emails && c.emails.length) possibleTabs.add('email');
+  exportSelected() {
+    const selected = this.state.contacts.filter(c => this.state.selectedIds.has(c.id));
+    this.downloadVCF(selected);
+  }
+  exportAll() { this.downloadVCF(this.state.filteredContacts); }
 
-        this.switchActionTab(possibleTabs.has(initialTab) ? initialTab : 'contact');
-    }
-
-    closeActionModal() {
-        document.getElementById('action-modal-overlay').classList.remove('active');
-        this.state.activeActionContact = null;
-    }
-
-    renderActionTabs() {
-        const c = this.state.activeActionContact;
-        const container = document.getElementById('action-tabs-container');
-        container.innerHTML = `<div class="action-tab" id="tab-contact" onclick="app.switchActionTab('contact')">vCard</div>`;
-        if (c.tels.length) container.innerHTML += `<div class="action-tab" id="tab-phone" onclick="app.switchActionTab('phone')">Call</div>`;
-        if (c.emails.length) container.innerHTML += `<div class="action-tab" id="tab-email" onclick="app.switchActionTab('email')">Email</div>`;
-    }
-
-    switchActionTab(tab) {
-        document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
-        const tabEl = document.getElementById(`tab-${tab}`);
-        if(tabEl) tabEl.classList.add('active');
-        
-        const c = this.state.activeActionContact;
-        const qrContainer = document.getElementById('qr-output');
-        const linkContainer = document.getElementById('action-links-container');
-        qrContainer.innerHTML = '';
-        linkContainer.innerHTML = '';
-        linkContainer.classList.add('hidden');
-
-        let qrText = '';
-
-        if (tab === 'contact') {
-            const minimalC = { ...c, photo: null };
-
-            // vCard 2.1 is default and uses CRLF + CHARSET=UTF-8 fields
-            const vcf = VCardEngine.generate(minimalC, true, { version: VCARD_DEFAULT_VERSION });
-
-            // Ensure QRCode.js receives UTF-8 bytes-like string
-            qrText = Utils.utf16to8(vcf);
-
-            linkContainer.classList.remove('hidden');
-            
-            if (c.tels.length) {
-                linkContainer.innerHTML += `
-                    <div style="margin-bottom: 10px;">
-                        <div class="action-label">Mobile</div>
-                        <a href="tel:${c.tels[0].value}" class="action-link-item">${Utils.escapeHtml(c.tels[0].value)}</a>
-                    </div>`;
-            }
-            if (c.emails.length) {
-                linkContainer.innerHTML += `
-                    <div>
-                        <div class="action-label">Email</div>
-                        <a href="mailto:${c.emails[0].value}" class="action-link-item">${Utils.escapeHtml(c.emails[0].value)}</a>
-                    </div>`;
-            }
-
-        } else if (tab === 'phone') {
-            const num = c.tels[0]?.value || '';
-            qrText = `tel:${num}`;
-            linkContainer.classList.remove('hidden');
-            linkContainer.innerHTML = `<a href="tel:${num}" class="action-link-item" style="font-size:1.5rem;">Call ${Utils.escapeHtml(num)}</a>`;
-        } else if (tab === 'email') {
-            const mail = c.emails[0]?.value || '';
-            qrText = `mailto:${mail}`;
-            linkContainer.classList.remove('hidden');
-            linkContainer.innerHTML = `<a href="mailto:${mail}" class="action-link-item" style="font-size:1.2rem;">${Utils.escapeHtml(mail)}</a>`;
-        }
-
-        if (qrText) {
-            new QRCode(qrContainer, { text: qrText, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
-        }
-    }
-
-    // --- CRUD ---
-    openModal(id = null) {
-        const modal = document.getElementById('modal-overlay');
-        const title = document.getElementById('modal-title');
-        document.querySelectorAll('.modal input, .modal textarea').forEach(i => i.value = '');
-        document.getElementById('edit-avatar-preview').innerHTML = '?';
-        document.getElementById('edit-avatar-preview').style.backgroundImage = 'none';
-        document.getElementById('note-counter').textContent = '0/1000';
-
-        if (id) {
-            const c = this.state.contacts.find(x => x.id === id);
-            if (!c) return;
-            title.textContent = 'Edit Contact';
-            document.getElementById('edit-id').value = c.id;
-            
-            const nameParts = (c.fn || '').split(' ');
-            document.getElementById('edit-fn-last').value = nameParts.length > 1 ? nameParts.pop() : '';
-            document.getElementById('edit-fn-first').value = nameParts.join(' ');
-            document.getElementById('edit-org').value = c.org || '';
-            document.getElementById('edit-title').value = c.title || '';
-            document.getElementById('edit-adr').value = c.adr || '';
-            document.getElementById('edit-note').value = c.note || '';
-            this.updateCharCount(document.getElementById('edit-note'));
-            
-            if (c.tels.find(t => (t.type || '').includes('CELL') || (t.type || '').includes('OTHER'))) {
-                document.getElementById('edit-tel-cell').value = c.tels.find(t => (t.type || '').includes('CELL') || (t.type || '').includes('OTHER')).value;
-            }
-            if (c.tels.find(t => (t.type || '').includes('WORK'))) document.getElementById('edit-tel-work').value = c.tels.find(t => (t.type || '').includes('WORK')).value;
-            if (c.emails.length) document.getElementById('edit-email').value = c.emails[0].value;
-
-            if (c.photo) {
-                document.getElementById('edit-avatar-preview').style.backgroundImage = `url(${c.photo})`;
-                document.getElementById('edit-avatar-preview').innerHTML = '';
-            } else {
-                document.getElementById('edit-avatar-preview').style.backgroundColor = Utils.stringToColor(c.fn);
-                document.getElementById('edit-avatar-preview').innerHTML = Utils.getInitials(c.fn);
-            }
-        } else {
-            title.textContent = 'New Contact';
-            document.getElementById('edit-id').value = '';
-        }
-        modal.classList.add('active');
-    }
-
-    closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
-    updateCharCount(el) { document.getElementById('note-counter').textContent = `${el.value.length}/1000`; }
-
-    saveContact() {
-        const id = document.getElementById('edit-id').value;
-        const first = document.getElementById('edit-fn-first').value.trim();
-        const last = document.getElementById('edit-fn-last').value.trim();
-        const fn = `${first} ${last}`.trim();
-        if (!fn) return this.showToast('Name is required', 'error');
-
-        const contactData = {
-            fn: fn,
-            n: `${last};${first};;;`,
-            org: document.getElementById('edit-org').value,
-            title: document.getElementById('edit-title').value,
-            adr: document.getElementById('edit-adr').value,
-            note: document.getElementById('edit-note').value,
-            tels: [],
-            emails: [],
-            version: VCARD_DEFAULT_VERSION
-        };
-
-        const cell = Utils.cleanPhoneNumber(document.getElementById('edit-tel-cell').value);
-        const work = Utils.cleanPhoneNumber(document.getElementById('edit-tel-work').value);
-        const email = document.getElementById('edit-email').value;
-
-        if (cell) contactData.tels.push({ value: cell, type: 'CELL,PREF' });
-        if (work) contactData.tels.push({ value: work, type: 'WORK' });
-        if (email) contactData.emails.push({ value: email, type: 'INTERNET' });
-
-        if (id) {
-            const idx = this.state.contacts.findIndex(c => c.id === id);
-            if (idx > -1) {
-                contactData.id = id;
-                contactData.photo = this.state.contacts[idx].photo;
-                this.state.contacts[idx] = contactData;
-            }
-        } else {
-            contactData.id = Utils.generateId();
-            contactData.photo = null;
-            this.state.contacts.unshift(contactData);
-        }
-        this.closeModal();
-        this.refreshData();
-        this.showToast('Contact saved', 'success');
-    }
-
-    deleteContact(id) {
-        if(confirm('Delete contact?')) {
-            this.state.contacts = this.state.contacts.filter(c => c.id !== id);
-            this.refreshData();
-            this.showToast('Deleted', 'success');
-        }
-    }
-
-    // --- Rendering ---
-    render() {
-        document.getElementById('total-contacts').textContent = this.state.contacts.length;
-        document.getElementById('total-orgs').textContent = new Set(this.state.contacts.map(c=>c.org).filter(Boolean)).size;
-
-        const hasContacts = this.state.contacts.length > 0;
-        document.getElementById('empty-state').classList.toggle('hidden', hasContacts);
-        document.getElementById('contact-table').classList.toggle('hidden', !hasContacts);
-        document.getElementById('pagination-controls').classList.toggle('hidden', !hasContacts);
-
-        this.renderToolbar();
-        if (hasContacts) this.renderTable();
-    }
-
-    renderToolbar() {
-        const toolbar = document.getElementById('toolbar');
-        let html = `
-            <div class="search-wrapper">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" id="search-input" placeholder="Search..." value="${document.getElementById('search-input')?.value || ''}">
-            </div>
-            <div class="toolbar-actions">
-        `;
-        
-        if (this.state.isSelectionMode) {
-            html += `
-                <button class="btn btn-primary" onclick="app.toggleSelectAll()">Select All</button>
-                <button class="btn btn-secondary" onclick="app.toggleSelectionMode(false)">Stop Select</button>
-            `;
-        } else {
-            html += `
-                <button class="btn btn-primary" onclick="document.getElementById('hidden-file-input').click()">Import</button>
-                <button class="btn btn-secondary" onclick="app.openModal()">Add</button>
-                <button class="btn btn-secondary" onclick="app.toggleSelectionMode(true)">Select</button>
-            `;
-        }
-
-        html += `
-                <button class="btn btn-secondary" id="batch-actions-btn" onclick="app.toggleBatchMenu()">Actions ▾</button>
-            </div>
-        `;
-        toolbar.innerHTML = html;
-        document.getElementById('search-input').addEventListener('input', (e) => this.handleSearch(e.target.value));
-    }
-
-    renderTable() {
-        const thead = document.getElementById('table-head');
-        const tbody = document.getElementById('table-body');
-        
-        // Header
-        let h = '<tr>';
-        if (this.state.isSelectionMode) h += '<th style="width: 40px;">✓</th>';
-        Object.entries(this.state.columns).forEach(([key, col]) => {
-            if (col.visible) h += `<th onclick="app.sort('${key}')">${col.label} ↕</th>`;
+  startInlineEdit(id) {
+    if (this.state.editingNoteId === id) return;
+    if (this.state.editingNoteId) this.saveInlineEdit(this.state.editingNoteId);
+    this.state.editingNoteId = id;
+    this.renderTable();
+    setTimeout(() => {
+      const el = document.getElementById(`note-edit-${id}`);
+      if (el) {
+        el.focus();
+        el.setSelectionRange(el.value.length, el.value.length);
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.saveInlineEdit(id); }
         });
-        h += '<th style="text-align: right;"></th></tr>';
-        thead.innerHTML = h;
+      }
+    }, 50);
+  }
 
-        // Body
-        tbody.innerHTML = '';
-        const { page, limit } = this.state.pagination;
-        const start = (page - 1) * limit;
-        const pageData = this.state.filteredContacts.slice(start, start + limit);
-        document.getElementById('page-info').textContent = `${Math.min(start + 1, this.state.filteredContacts.length)}-${Math.min(start + limit, this.state.filteredContacts.length)} of ${this.state.filteredContacts.length}`;
+  saveInlineEdit(id) {
+    const el = document.getElementById(`note-edit-${id}`);
+    if (!el) { this.state.editingNoteId = null; return; }
+    const val = el.value;
+    const c = this.state.contacts.find(x => x.id === id);
+    if (c && c.note !== val) { c.note = val; this.showToast('Note saved', 'success'); }
+    this.state.editingNoteId = null;
+    this.renderTable();
+  }
 
-        pageData.forEach(c => {
-            const tr = document.createElement('tr');
-            
-            // Selection Checkbox
-            let html = '';
-            if (this.state.isSelectionMode) {
-                const checked = this.state.selectedIds.has(c.id);
-                html += `<td><input type="checkbox" ${checked ? 'checked' : ''} onchange="app.toggleSelection('${c.id}')"></td>`;
-            }
+  // --- Action Modal (QR) ---
+  openActionModal(id, initialTab = 'contact') {
+    const c = this.state.contacts.find(x => x.id === id);
+    if (!c) return;
+    this.state.activeActionContact = c;
+    document.getElementById('action-modal-overlay').classList.add('active');
+    this.renderActionTabs();
 
-            // Columns
-            if (this.state.columns.fn.visible) {
-                let avatar = c.photo ? `<img src="${c.photo}" class="avatar">` : `<div class="avatar" style="background:${Utils.stringToColor(c.fn)}">${Utils.getInitials(c.fn)}</div>`;
-                html += `<td><div class="contact-info">${avatar}<div class="contact-meta"><span style="font-weight:500">${Utils.escapeHtml(c.fn)}</span>${c.title ? `<span class="meta-sub">${Utils.escapeHtml(c.title)}</span>` : ''}</div></div></td>`;
-            }
-            if (this.state.columns.tel.visible) html += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'phone')">${Utils.escapeHtml(c.tels[0]?.value || '')}</td>`;
-            if (this.state.columns.email.visible) html += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'email')">${Utils.escapeHtml(c.emails[0]?.value || '')}</td>`;
-            if (this.state.columns.org.visible) html += `<td>${c.org ? `<span class="tag">${Utils.escapeHtml(c.org)}</span>` : ''}</td>`;
-            
-            // Inline Notes
-            if (this.state.columns.note.visible) {
-                if (this.state.editingNoteId === c.id) {
-                    html += `<td class="note-cell" style="padding:4px; overflow:visible;">
-                        <div class="inline-editor" onclick="event.stopPropagation()">
-                            <textarea id="note-edit-${c.id}">${Utils.escapeHtml(c.note || '')}</textarea>
-                            <div class="inline-editor-actions">
-                                <button class="btn btn-primary btn-icon" style="width: auto; padding: 4px 12px;" onclick="app.saveInlineEdit('${c.id}')">Save</button>
-                            </div>
-                        </div>
-                    </td>`;
-                } else {
-                    html += `<td class="note-cell" onclick="app.startInlineEdit('${c.id}')">
-                        <div class="note-content">${Utils.escapeHtml(c.note || '') || '<span style="opacity:0.3; font-style:italic;">Add note...</span>'}</div>
-                    </td>`;
-                }
-            }
+    const possibleTabs = new Set(['contact']);
+    if (c.tels && c.tels.length) possibleTabs.add('phone');
+    if (c.emails && c.emails.length) possibleTabs.add('email');
 
-            if (this.state.columns.title.visible) html += `<td>${Utils.escapeHtml(c.title || '')}</td>`;
-            if (this.state.columns.adr.visible) html += `<td>${Utils.escapeHtml(c.adr || '')}</td>`;
+    this.switchActionTab(possibleTabs.has(initialTab) ? initialTab : 'contact');
+  }
 
-            // Row Actions
-            html += `<td style="text-align: right;">
-                <button class="btn btn-secondary btn-icon" onclick="app.openModal('${c.id}')">✏️</button>
-                ${!this.state.isSelectionMode ? `<button class="btn btn-danger btn-icon" onclick="app.deleteContact('${c.id}')" style="margin-left:4px;">🗑️</button>` : ''}
-            </td>`;
+  closeActionModal() {
+    document.getElementById('action-modal-overlay').classList.remove('active');
+    this.state.activeActionContact = null;
+  }
 
-            tr.innerHTML = html;
-            tr.ondblclick = (e) => {
-                if (!e.target.closest('.inline-editor')) app.openModal(c.id);
-            };
-            tbody.appendChild(tr);
-        });
+  renderActionTabs() {
+    const c = this.state.activeActionContact;
+    const container = document.getElementById('action-tabs-container');
+    container.innerHTML = `<div class="action-tab" id="tab-contact" onclick="app.switchActionTab('contact')">vCard</div>`;
+    if (c.tels.length) container.innerHTML += `<div class="action-tab" id="tab-phone" onclick="app.switchActionTab('phone')">Call</div>`;
+    if (c.emails.length) container.innerHTML += `<div class="action-tab" id="tab-email" onclick="app.switchActionTab('email')">Email</div>`;
+  }
+
+  switchActionTab(tab) {
+    document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
+    const tabEl = document.getElementById(`tab-${tab}`);
+    if (tabEl) tabEl.classList.add('active');
+
+    const c = this.state.activeActionContact;
+    const qrContainer = document.getElementById('qr-output');
+    const linkContainer = document.getElementById('action-links-container');
+    qrContainer.innerHTML = '';
+    linkContainer.innerHTML = '';
+    linkContainer.classList.add('hidden');
+
+    let qrText = '';
+    let rawTextForDebug = '';
+
+    if (tab === 'contact') {
+      // Minimal QR vCard 2.1 (plain) — this is the critical fix for "empty contact" on Android.
+      const minimalC = {
+        fn: c.fn || '',
+        n: c.n || '',
+        org: c.org || '',
+        title: c.title || '',
+        tels: (c.tels || []).slice(0, 3),
+        emails: (c.emails || []).slice(0, 2)
+      };
+
+      rawTextForDebug = VCardEngine.generateForQr(minimalC);
+
+      // Only UTF-8 transform if needed (non-ASCII). ASCII stays untouched.
+      qrText = Utils.maybeUtf8ForQr(rawTextForDebug);
+
+      linkContainer.classList.remove('hidden');
+
+      if (c.tels.length) {
+        linkContainer.innerHTML += `
+          <div style="margin-bottom: 10px;">
+            <div class="action-label">Mobile</div>
+            <a href="tel:${c.tels[0].value}" class="action-link-item">${Utils.escapeHtml(c.tels[0].value)}</a>
+          </div>`;
+      }
+      if (c.emails.length) {
+        linkContainer.innerHTML += `
+          <div>
+            <div class="action-label">Email</div>
+            <a href="mailto:${c.emails[0].value}" class="action-link-item">${Utils.escapeHtml(c.emails[0].value)}</a>
+          </div>`;
+      }
+
+      // Debug: show the exact vCard string the QR encodes (so you can copy/paste into any scanner app)
+      linkContainer.innerHTML += `
+        <details style="margin-top:10px;">
+          <summary style="cursor:pointer;color:var(--text-muted);font-size:.85rem;">Show raw vCard (for debugging)</summary>
+          <pre>${Utils.escapeHtml(rawTextForDebug)}</pre>
+        </details>
+      `;
+
+    } else if (tab === 'phone') {
+      const num = c.tels[0]?.value || '';
+      qrText = `tel:${num}`;
+      linkContainer.classList.remove('hidden');
+      linkContainer.innerHTML = `<a href="tel:${num}" class="action-link-item" style="font-size:1.5rem;">Call ${Utils.escapeHtml(num)}</a>`;
+    } else if (tab === 'email') {
+      const mail = c.emails[0]?.value || '';
+      qrText = `mailto:${mail}`;
+      linkContainer.classList.remove('hidden');
+      linkContainer.innerHTML = `<a href="mailto:${mail}" class="action-link-item" style="font-size:1.2rem;">${Utils.escapeHtml(mail)}</a>`;
     }
 
-    nextPage() { if (this.state.pagination.page * this.state.pagination.limit < this.state.filteredContacts.length) { this.state.pagination.page++; this.renderTable(); } }
-    prevPage() { if (this.state.pagination.page > 1) { this.state.pagination.page--; this.renderTable(); } }
+    if (qrText) {
+      new QRCode(qrContainer, { text: qrText, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
+    }
+  }
 
-    downloadVCF(contacts) {
-        if (!contacts.length) return;
+  // --- CRUD ---
+  openModal(id = null) {
+    const modal = document.getElementById('modal-overlay');
+    const title = document.getElementById('modal-title');
+    document.querySelectorAll('.modal input, .modal textarea').forEach(i => i.value = '');
+    document.getElementById('edit-avatar-preview').innerHTML = '?';
+    document.getElementById('edit-avatar-preview').style.backgroundImage = 'none';
+    document.getElementById('note-counter').textContent = '0/1000';
 
-        // Default export: vCard 2.1 (Android-friendly)
-        const vcfContent = VCardEngine.generate(contacts, false, { version: VCARD_DEFAULT_VERSION });
+    if (id) {
+      const c = this.state.contacts.find(x => x.id === id);
+      if (!c) return;
+      title.textContent = 'Edit Contact';
+      document.getElementById('edit-id').value = c.id;
 
-        const blob = new Blob([vcfContent], { type: 'text/x-vcard;charset=utf-8' });
-        const now = new Date();
-        const filename = `Nexus_Export_${now.toISOString().slice(0,10)}_${contacts.length}-contacts.vcf`;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = filename;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        this.showToast('Export started', 'success');
+      const nameParts = (c.fn || '').split(' ');
+      document.getElementById('edit-fn-last').value = nameParts.length > 1 ? nameParts.pop() : '';
+      document.getElementById('edit-fn-first').value = nameParts.join(' ');
+      document.getElementById('edit-org').value = c.org || '';
+      document.getElementById('edit-title').value = c.title || '';
+      document.getElementById('edit-adr').value = c.adr || '';
+      document.getElementById('edit-note').value = c.note || '';
+      this.updateCharCount(document.getElementById('edit-note'));
+
+      if (c.tels.find(t => (t.type || '').includes('CELL') || (t.type || '').includes('OTHER'))) {
+        document.getElementById('edit-tel-cell').value = c.tels.find(t => (t.type || '').includes('CELL') || (t.type || '').includes('OTHER')).value;
+      }
+      if (c.tels.find(t => (t.type || '').includes('WORK'))) document.getElementById('edit-tel-work').value = c.tels.find(t => (t.type || '').includes('WORK')).value;
+      if (c.emails.length) document.getElementById('edit-email').value = c.emails[0].value;
+
+      if (c.photo) {
+        document.getElementById('edit-avatar-preview').style.backgroundImage = `url(${c.photo})`;
+        document.getElementById('edit-avatar-preview').innerHTML = '';
+      } else {
+        document.getElementById('edit-avatar-preview').style.backgroundColor = Utils.stringToColor(c.fn);
+        document.getElementById('edit-avatar-preview').innerHTML = Utils.getInitials(c.fn);
+      }
+    } else {
+      title.textContent = 'New Contact';
+      document.getElementById('edit-id').value = '';
+    }
+    modal.classList.add('active');
+  }
+
+  closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
+  updateCharCount(el) { document.getElementById('note-counter').textContent = `${el.value.length}/1000`; }
+
+  saveContact() {
+    const id = document.getElementById('edit-id').value;
+    const first = document.getElementById('edit-fn-first').value.trim();
+    const last = document.getElementById('edit-fn-last').value.trim();
+    const fn = `${first} ${last}`.trim();
+    if (!fn) return this.showToast('Name is required', 'error');
+
+    const contactData = {
+      fn: fn,
+      n: `${last};${first};;;`,
+      org: document.getElementById('edit-org').value,
+      title: document.getElementById('edit-title').value,
+      adr: document.getElementById('edit-adr').value,
+      note: document.getElementById('edit-note').value,
+      tels: [],
+      emails: [],
+      version: VCARD_DEFAULT_VERSION
+    };
+
+    const cell = Utils.cleanPhoneNumber(document.getElementById('edit-tel-cell').value);
+    const work = Utils.cleanPhoneNumber(document.getElementById('edit-tel-work').value);
+    const email = document.getElementById('edit-email').value;
+
+    // Store rich type internally; generator will simplify for QR/export as needed.
+    if (cell) contactData.tels.push({ value: cell, type: 'CELL,PREF' });
+    if (work) contactData.tels.push({ value: work, type: 'WORK' });
+    if (email) contactData.emails.push({ value: email, type: 'INTERNET' });
+
+    if (id) {
+      const idx = this.state.contacts.findIndex(c => c.id === id);
+      if (idx > -1) {
+        contactData.id = id;
+        contactData.photo = this.state.contacts[idx].photo;
+        this.state.contacts[idx] = contactData;
+      }
+    } else {
+      contactData.id = Utils.generateId();
+      contactData.photo = null;
+      this.state.contacts.unshift(contactData);
+    }
+    this.closeModal();
+    this.refreshData();
+    this.showToast('Contact saved', 'success');
+  }
+
+  deleteContact(id) {
+    if (confirm('Delete contact?')) {
+      this.state.contacts = this.state.contacts.filter(c => c.id !== id);
+      this.refreshData();
+      this.showToast('Deleted', 'success');
+    }
+  }
+
+  render() {
+    document.getElementById('total-contacts').textContent = this.state.contacts.length;
+    document.getElementById('total-orgs').textContent = new Set(this.state.contacts.map(c => c.org).filter(Boolean)).size;
+
+    const hasContacts = this.state.contacts.length > 0;
+    document.getElementById('empty-state').classList.toggle('hidden', hasContacts);
+    document.getElementById('contact-table').classList.toggle('hidden', !hasContacts);
+    document.getElementById('pagination-controls').classList.toggle('hidden', !hasContacts);
+
+    this.renderToolbar();
+    if (hasContacts) this.renderTable();
+  }
+
+  renderToolbar() {
+    const toolbar = document.getElementById('toolbar');
+    let html = `
+      <div class="search-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="search-input" placeholder="Search..." value="${document.getElementById('search-input')?.value || ''}">
+      </div>
+      <div class="toolbar-actions">
+    `;
+
+    if (this.state.isSelectionMode) {
+      html += `
+        <button class="btn btn-primary" onclick="app.toggleSelectAll()">Select All</button>
+        <button class="btn btn-secondary" onclick="app.toggleSelectionMode(false)">Stop Select</button>
+      `;
+    } else {
+      html += `
+        <button class="btn btn-primary" onclick="document.getElementById('hidden-file-input').click()">Import</button>
+        <button class="btn btn-secondary" onclick="app.openModal()">Add</button>
+        <button class="btn btn-secondary" onclick="app.toggleSelectionMode(true)">Select</button>
+      `;
     }
 
-    applyTheme() { document.documentElement.setAttribute('data-theme', this.state.theme); localStorage.setItem('theme', this.state.theme); document.getElementById('theme-icon').textContent = this.state.theme === 'dark' ? '🌙' : '☀️'; }
-    toggleTheme() { this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark'; this.applyTheme(); }
-    showToast(msg, type = 'info') {
-        const c = document.getElementById('toast-container'); const t = document.createElement('div');
-        t.className = `toast ${type}`; t.textContent = msg; c.appendChild(t);
-        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+    html += `
+        <button class="btn btn-secondary" id="batch-actions-btn" onclick="app.toggleBatchMenu()">Actions ▾</button>
+      </div>
+    `;
+    toolbar.innerHTML = html;
+    document.getElementById('search-input').addEventListener('input', (e) => this.handleSearch(e.target.value));
+  }
+
+  renderTable() {
+    const thead = document.getElementById('table-head');
+    const tbody = document.getElementById('table-body');
+
+    let h = '<tr>';
+    if (this.state.isSelectionMode) h += '<th style="width: 40px;">✓</th>';
+    Object.entries(this.state.columns).forEach(([key, col]) => {
+      if (col.visible) h += `<th onclick="app.sort('${key}')">${col.label} ↕</th>`;
+    });
+    h += '<th style="text-align: right;"></th></tr>';
+    thead.innerHTML = h;
+
+    tbody.innerHTML = '';
+    const { page, limit } = this.state.pagination;
+    const start = (page - 1) * limit;
+    const pageData = this.state.filteredContacts.slice(start, start + limit);
+    document.getElementById('page-info').textContent =
+      `${Math.min(start + 1, this.state.filteredContacts.length)}-${Math.min(start + limit, this.state.filteredContacts.length)} of ${this.state.filteredContacts.length}`;
+
+    pageData.forEach(c => {
+      const tr = document.createElement('tr');
+
+      let html = '';
+      if (this.state.isSelectionMode) {
+        const checked = this.state.selectedIds.has(c.id);
+        html += `<td><input type="checkbox" ${checked ? 'checked' : ''} onchange="app.toggleSelection('${c.id}')"></td>`;
+      }
+
+      if (this.state.columns.fn.visible) {
+        let avatar = c.photo ? `<img src="${c.photo}" class="avatar">` : `<div class="avatar" style="background:${Utils.stringToColor(c.fn)}">${Utils.getInitials(c.fn)}</div>`;
+        html += `<td><div class="contact-info">${avatar}<div class="contact-meta"><span style="font-weight:500">${Utils.escapeHtml(c.fn)}</span>${c.title ? `<span class="meta-sub">${Utils.escapeHtml(c.title)}</span>` : ''}</div></div></td>`;
+      }
+      if (this.state.columns.tel.visible) html += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'phone')">${Utils.escapeHtml(c.tels[0]?.value || '')}</td>`;
+      if (this.state.columns.email.visible) html += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'email')">${Utils.escapeHtml(c.emails[0]?.value || '')}</td>`;
+      if (this.state.columns.org.visible) html += `<td>${c.org ? `<span class="tag">${Utils.escapeHtml(c.org)}</span>` : ''}</td>`;
+
+      if (this.state.columns.note.visible) {
+        if (this.state.editingNoteId === c.id) {
+          html += `<td class="note-cell" style="padding:4px; overflow:visible;">
+            <div class="inline-editor" onclick="event.stopPropagation()">
+              <textarea id="note-edit-${c.id}">${Utils.escapeHtml(c.note || '')}</textarea>
+              <div class="inline-editor-actions">
+                <button class="btn btn-primary btn-icon" style="width:auto;padding:4px 12px;" onclick="app.saveInlineEdit('${c.id}')">Save</button>
+              </div>
+            </div>
+          </td>`;
+        } else {
+          html += `<td class="note-cell" onclick="app.startInlineEdit('${c.id}')">
+            <div class="note-content">${Utils.escapeHtml(c.note || '') || '<span style="opacity:0.3; font-style:italic;">Add note...</span>'}</div>
+          </td>`;
+        }
+      }
+
+      if (this.state.columns.title.visible) html += `<td>${Utils.escapeHtml(c.title || '')}</td>`;
+      if (this.state.columns.adr.visible) html += `<td>${Utils.escapeHtml(c.adr || '')}</td>`;
+
+      html += `<td style="text-align:right;">
+        <button class="btn btn-secondary btn-icon" onclick="app.openModal('${c.id}')">✏️</button>
+        ${!this.state.isSelectionMode ? `<button class="btn btn-danger btn-icon" onclick="app.deleteContact('${c.id}')" style="margin-left:4px;">🗑️</button>` : ''}
+      </td>`;
+
+      tr.innerHTML = html;
+      tr.ondblclick = (e) => { if (!e.target.closest('.inline-editor')) app.openModal(c.id); };
+      tbody.appendChild(tr);
+    });
+  }
+
+  nextPage() {
+    if (this.state.pagination.page * this.state.pagination.limit < this.state.filteredContacts.length) {
+      this.state.pagination.page++; this.renderTable();
     }
+  }
+  prevPage() {
+    if (this.state.pagination.page > 1) {
+      this.state.pagination.page--; this.renderTable();
+    }
+  }
+
+  downloadVCF(contacts) {
+    if (!contacts.length) return;
+
+    // Export: vCard 2.1 default with CRLF, simplified TEL params
+    const vcfContent = VCardEngine.generate(contacts, false, { version: VCARD_DEFAULT_VERSION, eol: '\r\n' });
+
+    const blob = new Blob([vcfContent], { type: 'text/x-vcard;charset=utf-8' });
+    const now = new Date();
+    const filename = `Nexus_Export_${now.toISOString().slice(0,10)}_${contacts.length}-contacts.vcf`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    this.showToast('Export started', 'success');
+  }
+
+  applyTheme() {
+    document.documentElement.setAttribute('data-theme', this.state.theme);
+    localStorage.setItem('theme', this.state.theme);
+    document.getElementById('theme-icon').textContent = this.state.theme === 'dark' ? '🌙' : '☀️';
+  }
+  toggleTheme() { this.state.theme = this.state.theme === 'dark' ? 'light' : 'dark'; this.applyTheme(); }
+
+  showToast(msg, type = 'info') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+  }
 }
 
 const app = new App();
