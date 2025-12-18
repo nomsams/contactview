@@ -192,7 +192,6 @@
         .toast.success { border-left-color: var(--success); }
         .toast.error { border-left-color: var(--danger); }
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-
     </style>
 </head>
 <body>
@@ -236,11 +235,9 @@
     </aside>
 
     <main class="main-content">
-        <div class="toolbar" id="toolbar">
-            </div>
+        <div class="toolbar" id="toolbar"></div>
 
-        <div id="batch-menu" class="hidden" style="position: absolute; top: 75px; right: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 50; width: 200px;">
-            </div>
+        <div id="batch-menu" class="hidden" style="position: absolute; top: 75px; right: 24px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); z-index: 50; width: 200px;"></div>
 
         <div class="table-wrapper" id="table-container">
             <div class="empty-state" id="empty-state">
@@ -354,6 +351,12 @@
 
 <script>
 /**
+ * GLOBAL DEFAULTS
+ * vCard 2.1 is default for QR and exports for maximum Android camera/import compatibility.
+ */
+const VCARD_DEFAULT_VERSION = '2.1';
+
+/**
  * UTILITIES
  */
 const Utils = {
@@ -371,19 +374,20 @@ const Utils = {
         if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     },
-    decodeQP: (str) => str.replace(/=([A-Fa-f0-9]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16))).replace(/=\n/g, ''),
-    
-    // UPDATED: Robust Phone Cleaner (Domestic +46 replacement)
+    decodeQP: (str) =>
+        (str || '')
+            .replace(/=([A-Fa-f0-9]{2})/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)))
+            .replace(/=\r?\n/g, ''),
+
+    // Robust Phone Cleaner (+46 domestic handling kept)
     cleanPhoneNumber: (num) => {
         if (!num) return '';
-        let clean = num.replace(/[\s\-\(\)\.]/g, ''); 
+        let clean = String(num).replace(/[\s\-\(\)\.]/g, '');
         
         // International (00) -> +
         if (clean.startsWith('00')) return '+' + clean.substring(2);
 
-        // Domestic Swedish Rule: 
-        // Starts with 0, followed by a non-zero digit (01, 03, 07, 08 etc.)
-        // Matches 01x, 02x, 03x, 04x, 05x, 06x, 07x, 08, 09x
+        // Domestic Swedish Rule
         if (/^0[1-9]/.test(clean)) return '+46' + clean.substring(1);
 
         // If it starts with +, return as is
@@ -393,11 +397,9 @@ const Utils = {
         return clean; 
     },
 
-    // UTF-8 Encoder for QR (Fixes "* Alsjön" crash)
+    // UTF-8 encoder for QRCode.js (prevents non-ASCII crashes/mis-encodes in some browsers)
     utf16to8: (str) => {
-        var out, i, len, c;
-        out = "";
-        len = str.length;
+        var out = "", i = 0, len = (str || "").length, c;
         for(i = 0; i < len; i++) {
             c = str.charCodeAt(i);
             if ((c >= 0x0001) && (c <= 0x007F)) {
@@ -416,104 +418,265 @@ const Utils = {
 };
 
 /**
- * VCARD PARSER
+ * VCARD PARSER/GENERATOR
+ * - Parses vCard 2.1/3.0 reasonably.
+ * - Generates vCard 2.1 by default for QR + exports (Android-friendly).
+ * - TEL types are normalized so PREF is never the only qualifier (fixes Android ignoring phone fields).
  */
 class VCardEngine {
     static parse(content) {
         const contacts = [];
-        let normalized = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        let normalized = String(content || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+        // Unfold lines (RFC-ish): lines beginning with space/tab continue previous line
         const lines = [];
         normalized.split('\n').forEach(line => {
-            if (line.length === 0) return;
-            if ((line.startsWith(' ') || line.startsWith('\t')) && lines.length > 0) lines[lines.length - 1] += line.substring(1);
-            else lines.push(line);
+            if (!line) return;
+            if ((line.startsWith(' ') || line.startsWith('\t')) && lines.length > 0) {
+                lines[lines.length - 1] += line.substring(1);
+            } else {
+                lines.push(line);
+            }
         });
 
         let currentContact = null;
 
-        lines.forEach(line => {
-            if (line.startsWith('BEGIN:VCARD')) {
-                currentContact = { id: Utils.generateId(), fn: '', n: '', tels: [], emails: [], org: '', title: '', adr: '', note: '', photo: null, version: '3.0' };
-            } else if (line.startsWith('END:VCARD')) {
+        lines.forEach(rawLine => {
+            const line = rawLine.trimEnd();
+
+            if (line.toUpperCase().startsWith('BEGIN:VCARD')) {
+                currentContact = {
+                    id: Utils.generateId(),
+                    fn: '',
+                    n: '',
+                    tels: [],
+                    emails: [],
+                    org: '',
+                    title: '',
+                    adr: '',
+                    note: '',
+                    photo: null,
+                    version: '3.0'
+                };
+                return;
+            }
+
+            if (line.toUpperCase().startsWith('END:VCARD')) {
                 if (currentContact) {
                     if (!currentContact.fn && currentContact.n) currentContact.fn = currentContact.n.replace(/;/g, ' ').trim();
                     if (!currentContact.fn) currentContact.fn = 'Unknown Contact';
                     contacts.push(currentContact);
                     currentContact = null;
                 }
-            } else if (currentContact) {
-                const colonIndex = line.indexOf(':');
-                if (colonIndex === -1) return;
-                
-                let keyPart = line.substring(0, colonIndex);
-                let value = line.substring(colonIndex + 1);
-                let [key, ...params] = keyPart.split(';');
-                key = key.toUpperCase().trim();
-                
-                if (params.some(p => p.toUpperCase().includes('QUOTED-PRINTABLE'))) value = Utils.decodeQP(value);
+                return;
+            }
 
-                switch (key) {
-                    case 'FN': currentContact.fn = value; break;
-                    case 'N': currentContact.n = value; break;
-                    case 'ORG': currentContact.org = value.replace(/;/g, ' '); break;
-                    case 'TITLE': currentContact.title = value; break;
-                    case 'NOTE': currentContact.note = value.replace(/\\n/g, '\n'); break;
-                    case 'EMAIL': currentContact.emails.push({ value: value, type: this.extractType(params) }); break;
-                    case 'TEL': currentContact.tels.push({ value: Utils.cleanPhoneNumber(value), type: this.extractType(params) }); break;
-                    case 'ADR': currentContact.adr = value.split(';').filter(p => p.trim()).join(', '); break;
-                    case 'PHOTO':
-                        const isBase64 = params.some(p => p.toUpperCase().includes('ENCODING=B') || p.toUpperCase().includes('BASE64'));
-                        if (isBase64) {
-                            currentContact.photo = value.replace(/\s/g, '');
-                            if (!currentContact.photo.startsWith('data:image')) {
-                                const typeParam = params.find(p => p.toUpperCase().startsWith('TYPE='));
-                                const imgType = typeParam ? typeParam.split('=')[1] : 'jpeg';
-                                currentContact.photo = `data:image/${imgType};base64,${currentContact.photo}`;
-                            }
+            if (!currentContact) return;
+
+            const colonIndex = line.indexOf(':');
+            if (colonIndex === -1) return;
+
+            let keyPart = line.substring(0, colonIndex);
+            let value = line.substring(colonIndex + 1);
+
+            let [key, ...params] = keyPart.split(';');
+            key = key.toUpperCase().trim();
+            params = params.map(p => (p || '').trim());
+
+            // Quoted-printable decode if present
+            if (params.some(p => p.toUpperCase().includes('QUOTED-PRINTABLE'))) {
+                value = Utils.decodeQP(value);
+            }
+
+            switch (key) {
+                case 'VERSION':
+                    currentContact.version = value.trim();
+                    break;
+
+                case 'FN':
+                    currentContact.fn = value;
+                    break;
+
+                case 'N':
+                    currentContact.n = value;
+                    break;
+
+                case 'ORG':
+                    currentContact.org = value.replace(/;/g, ' ');
+                    break;
+
+                case 'TITLE':
+                    currentContact.title = value;
+                    break;
+
+                case 'NOTE':
+                    currentContact.note = value.replace(/\\n/g, '\n');
+                    break;
+
+                case 'EMAIL':
+                    currentContact.emails.push({ value: value, type: this.extractType(params, 'EMAIL') });
+                    break;
+
+                case 'TEL':
+                    currentContact.tels.push({ value: Utils.cleanPhoneNumber(value), type: this.extractType(params, 'TEL') });
+                    break;
+
+                case 'ADR':
+                    currentContact.adr = value.split(';').filter(p => p.trim()).join(', ');
+                    break;
+
+                case 'PHOTO': {
+                    const isBase64 = params.some(p => p.toUpperCase().includes('ENCODING=B') || p.toUpperCase().includes('BASE64'));
+                    if (isBase64) {
+                        currentContact.photo = value.replace(/\s/g, '');
+                        if (!currentContact.photo.startsWith('data:image')) {
+                            const typeParam = params.find(p => p.toUpperCase().startsWith('TYPE='));
+                            const imgType = typeParam ? typeParam.split('=')[1] : 'jpeg';
+                            currentContact.photo = `data:image/${imgType};base64,${currentContact.photo}`;
                         }
-                        break;
+                    }
+                    break;
                 }
             }
         });
+
         return contacts;
     }
 
-    static extractType(params) {
-        const typeParam = params.find(p => p.toUpperCase().startsWith('TYPE='));
+    static extractType(params, kind = 'GENERIC') {
+        // Collect TYPE tokens from both "TYPE=..." and bare tokens
+        const tokens = [];
+        (params || []).forEach(p => {
+            const up = (p || '').toUpperCase().trim();
+            if (!up) return;
+            if (up.startsWith('TYPE=')) {
+                up.substring(5).split(',').forEach(t => tokens.push((t || '').trim()));
+            } else {
+                tokens.push(up);
+            }
+        });
+
+        if (kind === 'TEL') return this.normalizeTelTypes(tokens);
+
+        // Email/Generic fallback
+        const typeParam = (params || []).find(p => (p || '').toUpperCase().startsWith('TYPE='));
         if (typeParam) return typeParam.split('=')[1].toUpperCase();
-        return ['CELL', 'WORK', 'HOME', 'VOICE', 'FAX'].find(t => params.some(p => p.toUpperCase().includes(t))) || 'OTHER';
+
+        return ['CELL', 'WORK', 'HOME', 'INTERNET', 'VOICE', 'FAX'].find(t =>
+            (params || []).some(p => (p || '').toUpperCase().includes(t))
+        ) || 'OTHER';
     }
 
-    static generate(contacts, single = false) {
+    static normalizeTelTypes(tokens) {
+        // Normalize + keep PREF only as an add-on, never alone
+        const set = new Set();
+
+        for (let t of (tokens || [])) {
+            t = (t || '').toUpperCase().replace(/"/g, '').trim();
+            if (!t) continue;
+
+            // Common aliases
+            if (t === 'MOBILE') t = 'CELL';
+            if (t === 'MAIN') t = 'VOICE';
+
+            if (t === 'PREF') { set.add('PREF'); continue; }
+            if (['CELL', 'WORK', 'HOME', 'VOICE', 'FAX'].includes(t)) set.add(t);
+        }
+
+        // If we only got PREF (or nothing), force a real type so Android imports it
+        const hasRealType = [...set].some(x => ['CELL', 'WORK', 'HOME', 'VOICE', 'FAX'].includes(x));
+        if (!hasRealType) set.add('CELL');
+
+        // Stable ordering
+        const order = ['CELL', 'WORK', 'HOME', 'VOICE', 'FAX', 'PREF'];
+        return order.filter(x => set.has(x)).join(',');
+    }
+
+    static buildNFromFN(fn) {
+        const parts = String(fn || '').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+        const last = parts.length > 1 ? parts.pop() : '';
+        const first = parts.join(' ');
+        return `${last};${first};;;`;
+    }
+
+    static sanitizeForVCardValue(val) {
+        // vCard 2.1 is more tolerant; still avoid raw CR/LF in values
+        return String(val || '').replace(/\r?\n/g, '\\n');
+    }
+
+    static generate(contacts, single = false, opts = {}) {
+        const version = String(opts.version || VCARD_DEFAULT_VERSION).trim() || '2.1';
+        const EOL = '\r\n';
+
         let vcf = '';
         const list = single ? [contacts] : contacts;
+
         list.forEach(c => {
-            vcf += 'BEGIN:VCARD\nVERSION:3.0\n';
-            vcf += `FN:${c.fn}\n`;
-            if (c.n) vcf += `N:${c.n}\n`;
-            else {
-                const parts = c.fn.split(' ');
-                vcf += `N:${parts.length > 1 ? parts.pop() : ''};${parts.join(' ')};;;\n`;
+            vcf += 'BEGIN:VCARD' + EOL;
+            vcf += `VERSION:${version}` + EOL;
+
+            const fn = (c && c.fn) ? String(c.fn) : '';
+            const n = (c && c.n && String(c.n).includes(';')) ? String(c.n) : this.buildNFromFN(fn);
+
+            // vCard 2.1: add CHARSET=UTF-8 for better non-ASCII handling on Android
+            if (version === '2.1') {
+                vcf += `N;CHARSET=UTF-8:${n}` + EOL;
+                vcf += `FN;CHARSET=UTF-8:${this.sanitizeForVCardValue(fn)}` + EOL;
+                if (c.org)   vcf += `ORG;CHARSET=UTF-8:${this.sanitizeForVCardValue(String(c.org).replace(/;/g, ' '))}` + EOL;
+                if (c.title) vcf += `TITLE;CHARSET=UTF-8:${this.sanitizeForVCardValue(c.title)}` + EOL;
+                if (c.note)  vcf += `NOTE;CHARSET=UTF-8:${this.sanitizeForVCardValue(c.note)}` + EOL;
+                if (c.adr)   vcf += `ADR;HOME;CHARSET=UTF-8:;;${this.sanitizeForVCardValue(c.adr)};;;;` + EOL;
+            } else {
+                // vCard 3.0+
+                vcf += `N:${n}` + EOL;
+                vcf += `FN:${this.sanitizeForVCardValue(fn)}` + EOL;
+                if (c.org)   vcf += `ORG:${this.sanitizeForVCardValue(String(c.org).replace(/;/g, ' '))}` + EOL;
+                if (c.title) vcf += `TITLE:${this.sanitizeForVCardValue(c.title)}` + EOL;
+                if (c.note)  vcf += `NOTE:${this.sanitizeForVCardValue(c.note)}` + EOL;
+                if (c.adr)   vcf += `ADR;TYPE=HOME:;;${this.sanitizeForVCardValue(c.adr)};;;;` + EOL;
             }
-            if (c.org) vcf += `ORG:${c.org}\n`;
-            if (c.title) vcf += `TITLE:${c.title}\n`;
-            if (c.note) vcf += `NOTE:${c.note.replace(/\n/g, '\\n')}\n`;
-            if (c.adr) vcf += `ADR;TYPE=HOME:;;${c.adr};;;;\n`;
-            
-            // UPDATED: Use simplified TEL type for maximum iOS/Android compatibility
-            // "TYPE=CELL" is usually sufficient and universally understood. 
-            // We strip VOICE or complex combos to prevent parsing failures.
-            c.tels.forEach(t => {
-                let type = t.type || 'CELL';
-                if(type === 'OTHER') type = 'VOICE'; // Fallback
-                vcf += `TEL;TYPE=${type}:${t.value}\n`;
+
+            // TEL: Ensure Android sees a real type (CELL/WORK/HOME/VOICE...) even if PREF is present
+            (c.tels || []).forEach(t => {
+                const num = (t && t.value) ? String(t.value) : '';
+                if (!num) return;
+
+                const normalized = this.normalizeTelTypes(String(t.type || 'CELL').split(','));
+                const parts = normalized.split(',').filter(Boolean);
+
+                if (version === '2.1') {
+                    // v2.1 style: TEL;CELL;PREF:+...
+                    // Convert comma list into semicolon params.
+                    // If only PREF somehow, normalizeTelTypes already forces CELL.
+                    const params = parts.join(';');
+                    vcf += `TEL;${params}:${num}` + EOL;
+                } else {
+                    // v3.0 style: TEL;TYPE=CELL,PREF:+...
+                    vcf += `TEL;TYPE=${parts.join(',')}:${num}` + EOL;
+                }
             });
 
-            c.emails.forEach(e => vcf += `EMAIL;TYPE=${e.type || 'INTERNET'}:${e.value}\n`);
-            
-            if (c.photo && c.photo.startsWith('data:image')) vcf += `PHOTO;ENCODING=b;TYPE=JPEG:${c.photo.split(',')[1]}\n`;
-            vcf += 'END:VCARD\n';
+            // EMAIL
+            (c.emails || []).forEach(e => {
+                const mail = (e && e.value) ? String(e.value) : '';
+                if (!mail) return;
+
+                if (version === '2.1') {
+                    // Common v2.1 pattern
+                    vcf += `EMAIL;INTERNET:${mail}` + EOL;
+                } else {
+                    vcf += `EMAIL;TYPE=${(e.type || 'INTERNET')}:${mail}` + EOL;
+                }
+            });
+
+            // PHOTO (kept as-is; many Android importers ignore via QR anyway)
+            if (c.photo && String(c.photo).startsWith('data:image')) {
+                vcf += `PHOTO;ENCODING=b;TYPE=JPEG:${String(c.photo).split(',')[1]}` + EOL;
+            }
+
+            vcf += 'END:VCARD' + EOL;
         });
+
         return vcf;
     }
 }
@@ -592,18 +755,21 @@ class App {
                 this.state.contacts = [...this.state.contacts, ...newContacts];
                 this.showToast(`Imported ${newContacts.length} contacts`, 'success');
                 this.refreshData();
-            } catch (err) { this.showToast('Failed to parse VCF', 'error'); }
+            } catch (err) { 
+                console.error(err);
+                this.showToast('Failed to parse VCF', 'error'); 
+            }
         };
         reader.readAsText(file);
     }
 
     handleSearch(val) {
         this.state.pagination.page = 1;
-        const q = val.toLowerCase();
+        const q = String(val || '').toLowerCase();
         if (!q) this.state.filteredContacts = [...this.state.contacts];
         else {
             this.state.filteredContacts = this.state.contacts.filter(c => 
-                `${c.fn} ${c.org} ${c.emails.map(e=>e.value).join(' ')} ${c.tels.map(t=>t.value).join(' ')} ${c.note}`.toLowerCase().includes(q)
+                `${c.fn} ${c.org} ${(c.emails||[]).map(e=>e.value).join(' ')} ${(c.tels||[]).map(t=>t.value).join(' ')} ${c.note}`.toLowerCase().includes(q)
             );
         }
         this.sortData();
@@ -733,7 +899,6 @@ class App {
             if (el) { 
                 el.focus(); 
                 el.setSelectionRange(el.value.length, el.value.length); 
-                // Note: Blur listener handled in Global Click to prevent race conditions
                 el.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -746,7 +911,6 @@ class App {
     
     saveInlineEdit(id) {
         const el = document.getElementById(`note-edit-${id}`);
-        // If element is missing, we might have already closed it or switched pages
         if (!el) {
             this.state.editingNoteId = null;
             return;
@@ -771,7 +935,13 @@ class App {
         this.state.activeActionContact = c;
         document.getElementById('action-modal-overlay').classList.add('active');
         this.renderActionTabs();
-        this.switchActionTab('contact'); // Force VCard default
+
+        // Respect requested tab if it exists; otherwise default to vCard
+        const possibleTabs = new Set(['contact']);
+        if (c.tels && c.tels.length) possibleTabs.add('phone');
+        if (c.emails && c.emails.length) possibleTabs.add('email');
+
+        this.switchActionTab(possibleTabs.has(initialTab) ? initialTab : 'contact');
     }
 
     closeActionModal() {
@@ -803,8 +973,13 @@ class App {
 
         if (tab === 'contact') {
             const minimalC = { ...c, photo: null };
-            // Ensure UTF-8 string is generated for QR
-            qrText = Utils.utf16to8(VCardEngine.generate(minimalC, true));
+
+            // vCard 2.1 is default and uses CRLF + CHARSET=UTF-8 fields
+            const vcf = VCardEngine.generate(minimalC, true, { version: VCARD_DEFAULT_VERSION });
+
+            // Ensure QRCode.js receives UTF-8 bytes-like string
+            qrText = Utils.utf16to8(vcf);
+
             linkContainer.classList.remove('hidden');
             
             if (c.tels.length) {
@@ -823,12 +998,12 @@ class App {
             }
 
         } else if (tab === 'phone') {
-            const num = c.tels[0]?.value;
+            const num = c.tels[0]?.value || '';
             qrText = `tel:${num}`;
             linkContainer.classList.remove('hidden');
             linkContainer.innerHTML = `<a href="tel:${num}" class="action-link-item" style="font-size:1.5rem;">Call ${Utils.escapeHtml(num)}</a>`;
         } else if (tab === 'email') {
-            const mail = c.emails[0]?.value;
+            const mail = c.emails[0]?.value || '';
             qrText = `mailto:${mail}`;
             linkContainer.classList.remove('hidden');
             linkContainer.innerHTML = `<a href="mailto:${mail}" class="action-link-item" style="font-size:1.2rem;">${Utils.escapeHtml(mail)}</a>`;
@@ -863,8 +1038,10 @@ class App {
             document.getElementById('edit-note').value = c.note || '';
             this.updateCharCount(document.getElementById('edit-note'));
             
-            if (c.tels.find(t => t.type === 'CELL' || t.type === 'OTHER')) document.getElementById('edit-tel-cell').value = c.tels.find(t => t.type === 'CELL' || t.type === 'OTHER').value;
-            if (c.tels.find(t => t.type === 'WORK')) document.getElementById('edit-tel-work').value = c.tels.find(t => t.type === 'WORK').value;
+            if (c.tels.find(t => (t.type || '').includes('CELL') || (t.type || '').includes('OTHER'))) {
+                document.getElementById('edit-tel-cell').value = c.tels.find(t => (t.type || '').includes('CELL') || (t.type || '').includes('OTHER')).value;
+            }
+            if (c.tels.find(t => (t.type || '').includes('WORK'))) document.getElementById('edit-tel-work').value = c.tels.find(t => (t.type || '').includes('WORK')).value;
             if (c.emails.length) document.getElementById('edit-email').value = c.emails[0].value;
 
             if (c.photo) {
@@ -892,15 +1069,22 @@ class App {
         if (!fn) return this.showToast('Name is required', 'error');
 
         const contactData = {
-            fn: fn, n: `${last};${first};;;`, org: document.getElementById('edit-org').value,
-            title: document.getElementById('edit-title').value, adr: document.getElementById('edit-adr').value,
-            note: document.getElementById('edit-note').value, tels: [], emails: []
+            fn: fn,
+            n: `${last};${first};;;`,
+            org: document.getElementById('edit-org').value,
+            title: document.getElementById('edit-title').value,
+            adr: document.getElementById('edit-adr').value,
+            note: document.getElementById('edit-note').value,
+            tels: [],
+            emails: [],
+            version: VCARD_DEFAULT_VERSION
         };
+
         const cell = Utils.cleanPhoneNumber(document.getElementById('edit-tel-cell').value);
         const work = Utils.cleanPhoneNumber(document.getElementById('edit-tel-work').value);
         const email = document.getElementById('edit-email').value;
 
-        if (cell) contactData.tels.push({ value: cell, type: 'CELL' });
+        if (cell) contactData.tels.push({ value: cell, type: 'CELL,PREF' });
         if (work) contactData.tels.push({ value: work, type: 'WORK' });
         if (email) contactData.emails.push({ value: email, type: 'INTERNET' });
 
@@ -1053,8 +1237,11 @@ class App {
 
     downloadVCF(contacts) {
         if (!contacts.length) return;
-        const vcfContent = VCardEngine.generate(contacts);
-        const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8' });
+
+        // Default export: vCard 2.1 (Android-friendly)
+        const vcfContent = VCardEngine.generate(contacts, false, { version: VCARD_DEFAULT_VERSION });
+
+        const blob = new Blob([vcfContent], { type: 'text/x-vcard;charset=utf-8' });
         const now = new Date();
         const filename = `Nexus_Export_${now.toISOString().slice(0,10)}_${contacts.length}-contacts.vcf`;
         const url = URL.createObjectURL(blob);
