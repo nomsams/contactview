@@ -161,18 +161,21 @@
     details{width:100%;text-align:left}
     details pre{white-space:pre-wrap;word-break:break-word;background:var(--bg-body);border:1px solid var(--border);padding:10px;border-radius:8px;color:var(--text-main);margin-top:8px;font-size:.75rem; max-height: 200px; overflow-y: auto;}
 
-    /* Calendar Styles - Compacted */
-    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-    .calendar-header h4 { margin: 0; font-size: 1rem; font-weight: 600; }
+    /* Calendar Styles - Vertical Layout */
+    .calendar-wrapper { display: flex; gap: 12px; align-items: stretch; margin-top: 0.5rem; background: var(--bg-body); padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
+    .calendar-month-vertical { writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; font-weight: 600; font-size: 0.95rem; color: var(--primary); display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); padding-left: 8px; letter-spacing: 1px; text-transform: uppercase; }
+    .calendar-main { flex: 1; display: flex; flex-direction: column; }
     .calendar-grid { display: grid; grid-template-columns: 24px repeat(7, 1fr); gap: 2px; text-align: center; font-size: 0.8rem; }
     .cal-day-header { font-weight: 600; color: var(--text-muted); padding-bottom: 4px; font-size: 0.75rem; }
-    .cal-day { padding: 4px 0; border-radius: 4px; cursor: pointer; background: var(--bg-body); border: 1px solid var(--border); transition: all 0.2s; }
+    .cal-day { padding: 4px 0; border-radius: 4px; cursor: pointer; background: var(--bg-surface); border: 1px solid var(--border); transition: all 0.2s; }
     .cal-day:hover { background: var(--bg-surface-hover); }
     .cal-day.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: bold; }
     .cal-day.today { border-color: var(--primary); color: var(--primary); font-weight: bold; }
     .cal-day.active.today { color: #fff; }
     .cal-day.other-month { opacity: 0.3; }
     .cal-week { font-size: 0.65rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; background: transparent; border: none; font-weight: 600; }
+    .calendar-nav { display: flex; justify-content: center; gap: 15px; margin-top: 10px; }
+    .calendar-nav .btn { width: 40px; height: 28px; }
 
     /* Compact Form inside Action Modal */
     .action-right .form-grid { gap: 0.5rem; }
@@ -236,7 +239,7 @@
         <span id="theme-icon">🌙</span> <span class="sidebar-text">Toggle Theme</span>
       </button>
       <div class="sidebar-text" style="margin-top: 15px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
-        v2.6.3 Enterprise
+        v2.6.4 Enterprise
       </div>
     </div>
   </aside>
@@ -353,21 +356,23 @@
           </div>
           
           <div class="action-right">
-            <!-- Notes Section (Moved to Top, Made Bigger) -->
+            <!-- Notes Section -->
             <div class="form-group full" style="margin-bottom: 0.5rem;">
               <label>Contact Notes</label>
               <textarea id="action-note-input" rows="4" style="min-height: 80px; resize: vertical;" oninput="app.updateActionNote(this.value)" placeholder="Add notes here..."></textarea>
             </div>
-            
-            <hr style="border:0; border-top:1px solid var(--border); margin: 0.5rem 0; width: 100%;">
 
-            <!-- Calendar Section -->
-            <div class="calendar-header">
-              <button class="btn btn-secondary btn-icon" onclick="app.changeMonth(-1)">←</button>
-              <h4 id="cal-month-year">Month Year</h4>
-              <button class="btn btn-secondary btn-icon" onclick="app.changeMonth(1)">→</button>
+            <!-- Calendar Section (Vertical Layout) -->
+            <div class="calendar-wrapper">
+              <div id="cal-month-year" class="calendar-month-vertical">Month Year</div>
+              <div class="calendar-main">
+                <div class="calendar-grid" id="calendar-grid"></div>
+                <div class="calendar-nav">
+                  <button class="btn btn-secondary btn-icon" onclick="app.changeMonth(-1)">←</button>
+                  <button class="btn btn-secondary btn-icon" onclick="app.changeMonth(1)">→</button>
+                </div>
+              </div>
             </div>
-            <div class="calendar-grid" id="calendar-grid"></div>
 
             <!-- Event Form -->
             <div class="form-grid" style="margin-top: 0.5rem;">
@@ -608,7 +613,6 @@ class VCardEngine {
     for (const e of emails) {
       const mail = String(e?.value || '').trim();
       if (!mail) continue;
-      // Added ;INTERNET to ensure Android parsers pick up the email correctly
       lines.push(`EMAIL;INTERNET:${mail}`);
     }
 
@@ -1030,7 +1034,7 @@ class App {
       return;
     }
 
-    // --- 5-Tier Fallback System for vCards ---
+    // --- 6-Tier Fallback System for vCards ---
     let debugLog = "QR Generation Log:\n";
     let success = false;
     let finalPayload = "";
@@ -1058,25 +1062,37 @@ class App {
     else if (tryGenerate(utf8Vcard, 'L', 'Attempt 2: Full Minimal vCard (UTF-8, Level L)')) {
       success = true; finalPayload = vcardFull;
     }
-    // 3. ASCII-only vCard (Level L) - Strips special chars that break qrcode.js byte counter
+    // 3. Transliterated vCard (Level L) - Replace Swedish/Nordic chars
     else {
-      let asciiVcard = vcardFull.replace(/[^\x00-\x7F]/g, '');
-      if (tryGenerate(asciiVcard, 'L', 'Attempt 3: ASCII-only vCard (Level L)')) {
-        success = true; finalPayload = asciiVcard;
+      const transliterate = (str) => {
+        const map = { 'å':'a', 'ä':'a', 'ö':'o', 'Å':'A', 'Ä':'A', 'Ö':'O', 'é':'e', 'è':'e', 'ü':'u', 'æ':'a', 'ø':'o', 'Æ':'A', 'Ø':'O' };
+        return str.replace(/[åäöÅÄÖéèüæøÆØ]/g, m => map[m] || m);
+      };
+      let transVcard = transliterate(vcardFull);
+      let utf8Trans = unescape(encodeURIComponent(transVcard));
+      if (tryGenerate(utf8Trans, 'L', 'Attempt 3: Transliterated vCard (Level L)')) {
+        success = true; finalPayload = transVcard;
       }
-      // 4. Ultra-minimal vCard (Name + Phone only, Level L) - Note stripped to save space
+      // 4. ASCII-only vCard (Level L) - Strips special chars that break qrcode.js byte counter
       else {
-        let ultraMinimal = `BEGIN:VCARD\nVERSION:2.1\nFN:${payload.fn || ''}\nTEL:${payload.tels?.[0]?.value || ''}\nEND:VCARD`;
-        let utf8Ultra = unescape(encodeURIComponent(ultraMinimal));
-        if (tryGenerate(utf8Ultra, 'L', 'Attempt 4: Ultra-minimal vCard (UTF-8, Level L)')) {
-          success = true; finalPayload = ultraMinimal;
+        let asciiVcard = vcardFull.replace(/[^\x00-\x7F]/g, '');
+        if (tryGenerate(asciiVcard, 'L', 'Attempt 4: ASCII-only vCard (Level L)')) {
+          success = true; finalPayload = asciiVcard;
         }
-        // 5. MECARD format (Extremely compact, native iOS/Android support)
+        // 5. Ultra-minimal vCard (Name + Phone only, Level L) - Note stripped to save space
         else {
-          let mecard = `MECARD:N:${payload.fn || ''};TEL:${payload.tels?.[0]?.value || ''};EMAIL:${payload.emails?.[0]?.value || ''};;`;
-          let utf8Mecard = unescape(encodeURIComponent(mecard));
-          if (tryGenerate(utf8Mecard, 'L', 'Attempt 5: MECARD format (UTF-8, Level L)')) {
-            success = true; finalPayload = mecard;
+          let ultraMinimal = `BEGIN:VCARD\nVERSION:2.1\nFN:${payload.fn || ''}\nTEL:${payload.tels?.[0]?.value || ''}\nEND:VCARD`;
+          let utf8Ultra = unescape(encodeURIComponent(ultraMinimal));
+          if (tryGenerate(utf8Ultra, 'L', 'Attempt 5: Ultra-minimal vCard (UTF-8, Level L)')) {
+            success = true; finalPayload = ultraMinimal;
+          }
+          // 6. MECARD format (Extremely compact, native iOS/Android support)
+          else {
+            let mecard = `MECARD:N:${payload.fn || ''};TEL:${payload.tels?.[0]?.value || ''};EMAIL:${payload.emails?.[0]?.value || ''};;`;
+            let utf8Mecard = unescape(encodeURIComponent(mecard));
+            if (tryGenerate(utf8Mecard, 'L', 'Attempt 6: MECARD format (UTF-8, Level L)')) {
+              success = true; finalPayload = mecard;
+            }
           }
         }
       }
