@@ -150,7 +150,7 @@
     .action-link-item:hover{text-decoration:underline}
     .action-label{font-size:.7rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px}
     details{width:100%;text-align:left}
-    details pre{white-space:pre-wrap;word-break:break-word;background:var(--bg-body);border:1px solid var(--border);padding:10px;border-radius:8px;color:var(--text-main);margin-top:8px;font-size:.8rem; max-height: 150px; overflow-y: auto;}
+    details pre{white-space:pre-wrap;word-break:break-word;background:var(--bg-body);border:1px solid var(--border);padding:10px;border-radius:8px;color:var(--text-main);margin-top:8px;font-size:.75rem; max-height: 200px; overflow-y: auto;}
 
     /* Calendar Styles - Compacted */
     .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
@@ -227,7 +227,7 @@
         <span id="theme-icon">🌙</span> <span class="sidebar-text">Toggle Theme</span>
       </button>
       <div class="sidebar-text" style="margin-top: 15px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
-        v2.6.1 Enterprise
+        v2.6.2 Enterprise
       </div>
     </div>
   </aside>
@@ -344,6 +344,14 @@
           </div>
           
           <div class="action-right">
+            <!-- Notes Section (Moved to Top) -->
+            <div class="form-group full" style="margin-bottom: 0.5rem;">
+              <label>Contact Notes</label>
+              <textarea id="action-note-input" rows="2" oninput="app.updateActionNote(this.value)" placeholder="Add notes here..."></textarea>
+            </div>
+            
+            <hr style="border:0; border-top:1px solid var(--border); margin: 0.5rem 0; width: 100%;">
+
             <!-- Calendar Section -->
             <div class="calendar-header">
               <button class="btn btn-secondary btn-icon" onclick="app.changeMonth(-1)">←</button>
@@ -382,12 +390,6 @@
             <div style="display:flex; gap:8px; margin-top: 8px;">
               <button class="btn btn-primary" onclick="app.exportEvent('gcal')" style="flex:1; font-size:0.8rem;">+ Google Calendar</button>
               <button class="btn btn-secondary" onclick="app.exportEvent('ics')" style="flex:1; font-size:0.8rem;">Download .ics</button>
-            </div>
-
-            <!-- Notes Section -->
-            <div class="form-group full" style="margin-top: 0.5rem;">
-              <label>Contact Notes</label>
-              <textarea id="action-note-input" rows="3" oninput="app.updateActionNote(this.value)" placeholder="Add notes here..."></textarea>
             </div>
           </div>
         </div>
@@ -436,30 +438,6 @@ const Utils = {
     if (/^0[1-9]/.test(clean)) return '+46' + clean.substring(1);
     if (clean.startsWith('+')) return clean;
     return clean;
-  },
-
-  // Kept for backward compatibility if needed elsewhere
-  utf16to8: (str) => {
-    str = String(str || '');
-    let out = "", i = 0, len = str.length, c;
-    for(i = 0; i < len; i++) {
-      c = str.charCodeAt(i);
-      if (c >= 0x0001 && c <= 0x007F) out += str.charAt(i);
-      else if (c > 0x07FF) {
-        out += String.fromCharCode(0xE0 | ((c >> 12) & 0x0F));
-        out += String.fromCharCode(0x80 | ((c >>  6) & 0x3F));
-        out += String.fromCharCode(0x80 | ((c >>  0) & 0x3F));
-      } else {
-        out += String.fromCharCode(0xC0 | ((c >>  6) & 0x1F));
-        out += String.fromCharCode(0x80 | ((c >>  0) & 0x3F));
-      }
-    }
-    return out;
-  },
-
-  maybeUtf8ForQr: (str) => {
-    str = String(str || '');
-    return /[^\x00-\x7F]/.test(str) ? Utils.utf16to8(str) : str;
   }
 };
 
@@ -983,16 +961,11 @@ class App {
     linkContainer.innerHTML = '';
     linkContainer.classList.add('hidden');
 
-    let qrText = '';
-    let rawTextForDebug = '';
-
     if (tab === 'contact') {
       const minimalC = {
         fn: c.fn || '', n: c.n || '', org: c.org || '', title: c.title || '',
         tels: (c.tels || []).slice(0, 3), emails: (c.emails || []).slice(0, 2)
       };
-      rawTextForDebug = VCardEngine.generateForQr(minimalC);
-      qrText = rawTextForDebug; // We will handle UTF-8 encoding safely in generateQRCodeSafe
 
       linkContainer.classList.remove('hidden');
       if (c.tels.length) {
@@ -1011,44 +984,99 @@ class App {
       }
       linkContainer.innerHTML += `
         <details style="margin-top:10px;">
-          <summary style="cursor:pointer;color:var(--text-muted);font-size:.85rem;">Show raw vCard (for debugging)</summary>
-          <pre>${Utils.escapeHtml(rawTextForDebug)}</pre>
+          <summary style="cursor:pointer;color:var(--text-muted);font-size:.85rem;">Show raw vCard & Debug Logs</summary>
+          <pre id="qr-debug-log"></pre>
         </details>
       `;
+
+      // Trigger multi-tier fallback generation
+      this.generateQRCodeSafe(qrContainer, minimalC, 'vcard', document.getElementById('qr-debug-log'));
+
     } else if (tab === 'phone') {
       const num = c.tels[0]?.value || '';
-      qrText = `tel:${num}`;
       linkContainer.classList.remove('hidden');
       linkContainer.innerHTML = `<a href="tel:${num}" class="action-link-item" style="font-size:1.5rem;">Call ${Utils.escapeHtml(num)}</a>`;
+      this.generateQRCodeSafe(qrContainer, `tel:${num}`, 'text');
     } else if (tab === 'email') {
       const mail = c.emails[0]?.value || '';
-      qrText = `mailto:${mail}`;
       linkContainer.classList.remove('hidden');
       linkContainer.innerHTML = `<a href="mailto:${mail}" class="action-link-item" style="font-size:1.2rem;">${Utils.escapeHtml(mail)}</a>`;
-    }
-
-    if (qrText) {
-      this.generateQRCodeSafe(qrContainer, qrText);
+      this.generateQRCodeSafe(qrContainer, `mailto:${mail}`, 'text');
     }
   }
 
-  generateQRCodeSafe(container, text) {
+  generateQRCodeSafe(container, payload, type, debugContainer = null) {
     container.innerHTML = '';
-    try {
-      // unescape(encodeURIComponent()) converts the string into a UTF-8 byte string.
-      // This perfectly aligns JS .length with the actual byte length, preventing the 
-      // "Data too large" calculation bug in qrcode.js when using non-ASCII characters (like 'ä').
-      const safeText = unescape(encodeURIComponent(text));
-      new QRCode(container, { text: safeText, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
-    } catch (e) {
-      console.warn("QR Generation failed with safeText, trying raw", e);
+    
+    if (type === 'text') {
+      try {
+        new QRCode(container, { text: payload, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+      } catch (e) {
+        console.error("QR Generation failed for text", e);
+        container.innerHTML = '<div style="color:var(--danger);text-align:center;padding:20px;font-size:0.9rem;">Failed to generate QR</div>';
+      }
+      return;
+    }
+
+    // --- 5-Tier Fallback System for vCards ---
+    let debugLog = "QR Generation Log:\n";
+    let success = false;
+    let finalPayload = "";
+
+    const tryGenerate = (text, level, attemptName) => {
       try {
         container.innerHTML = '';
-        new QRCode(container, { text: text, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
-      } catch (e2) {
-        console.error("QR Generation completely failed", e2);
-        container.innerHTML = '<div style="color:var(--danger);text-align:center;padding:20px;font-size:0.9rem;">Data too large or contains unsupported characters.</div>';
+        new QRCode(container, { text: text, width: 220, height: 220, correctLevel: QRCode.CorrectLevel[level] });
+        debugLog += `[SUCCESS] ${attemptName}\n`;
+        return true;
+      } catch (e) {
+        debugLog += `[FAILED] ${attemptName}: ${e.message || 'Data too large'}\n`;
+        return false;
       }
+    };
+
+    // 1. Full Minimal vCard (UTF-8, Level M)
+    let vcardFull = VCardEngine.generateForQr(payload);
+    let utf8Vcard = unescape(encodeURIComponent(vcardFull));
+    
+    if (tryGenerate(utf8Vcard, 'M', 'Attempt 1: Full Minimal vCard (UTF-8, Level M)')) {
+      success = true; finalPayload = vcardFull;
+    } 
+    // 2. Full Minimal vCard (UTF-8, Level L)
+    else if (tryGenerate(utf8Vcard, 'L', 'Attempt 2: Full Minimal vCard (UTF-8, Level L)')) {
+      success = true; finalPayload = vcardFull;
+    }
+    // 3. ASCII-only vCard (Level L) - Strips special chars that break qrcode.js byte counter
+    else {
+      let asciiVcard = vcardFull.replace(/[^\x00-\x7F]/g, '');
+      if (tryGenerate(asciiVcard, 'L', 'Attempt 3: ASCII-only vCard (Level L)')) {
+        success = true; finalPayload = asciiVcard;
+      }
+      // 4. Ultra-minimal vCard (Name + Phone only, Level L)
+      else {
+        let ultraMinimal = `BEGIN:VCARD\nVERSION:2.1\nFN:${payload.fn || ''}\nTEL:${payload.tels?.[0]?.value || ''}\nEND:VCARD`;
+        let utf8Ultra = unescape(encodeURIComponent(ultraMinimal));
+        if (tryGenerate(utf8Ultra, 'L', 'Attempt 4: Ultra-minimal vCard (UTF-8, Level L)')) {
+          success = true; finalPayload = ultraMinimal;
+        }
+        // 5. MECARD format (Extremely compact, native iOS/Android support)
+        else {
+          let mecard = `MECARD:N:${payload.fn || ''};TEL:${payload.tels?.[0]?.value || ''};EMAIL:${payload.emails?.[0]?.value || ''};;`;
+          let utf8Mecard = unescape(encodeURIComponent(mecard));
+          if (tryGenerate(utf8Mecard, 'L', 'Attempt 5: MECARD format (UTF-8, Level L)')) {
+            success = true; finalPayload = mecard;
+          }
+        }
+      }
+    }
+
+    if (!success) {
+      container.innerHTML = '<div style="color:var(--danger);text-align:center;padding:20px;font-size:0.9rem;">Data too large or contains unsupported characters. All fallbacks failed.</div>';
+      debugLog += `[FATAL] All QR generation attempts failed.\n`;
+    }
+
+    if (debugContainer) {
+      debugContainer.textContent = debugLog + "\n--- Final Payload Used ---\n" + (success ? finalPayload : "None");
     }
   }
 
