@@ -113,10 +113,10 @@
     .modal{background:var(--bg-surface);width:600px;max-width:95%;border-radius:12px;box-shadow:var(--shadow);border:1px solid var(--border);
       display:flex;flex-direction:column;max-height:90vh;transform:scale(.95);transition:transform .2s}
     .modal-backdrop.active .modal{transform:scale(1)}
-    .modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    .modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center; flex-shrink: 0;}
     .modal-body{padding:1.5rem;overflow-y:auto}
     .modal-footer{padding:1.25rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;background:var(--bg-body);
-      border-radius:0 0 12px 12px}
+      border-radius:0 0 12px 12px; flex-shrink: 0;}
 
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
     .form-group{margin-bottom:0}
@@ -132,13 +132,13 @@
     .char-counter{font-size:.7rem;color:var(--text-muted);text-align:right;margin-top:4px;display:block}
 
     /* Action Modal Specifics */
-    #action-modal-overlay .modal { width: 850px; max-width: 95vw; }
-    .action-body{padding:1.5rem; display:flex; flex-direction:column; gap:1.5rem;}
-    .action-layout { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; }
+    #action-modal-overlay .modal { width: 850px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column; }
+    .action-body{padding:1.5rem; display:flex; flex-direction:column; gap:1rem; overflow-y:auto; flex: 1;}
+    .action-layout { display: flex; flex-direction: column; gap: 1rem; width: 100%; }
     @media (min-width: 768px) {
       .action-layout { flex-direction: row; }
       .action-left { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-      .action-right { flex: 1; display: flex; flex-direction: column; gap: 1rem; border-left: 1px solid var(--border); padding-left: 1.5rem; }
+      .action-right { flex: 1; display: flex; flex-direction: column; gap: 0.75rem; border-left: 1px solid var(--border); padding-left: 1.5rem; }
     }
 
     .action-tabs{display:flex;gap:4px;background:var(--bg-body);padding:4px;border-radius:8px;width:100%}
@@ -152,18 +152,23 @@
     details{width:100%;text-align:left}
     details pre{white-space:pre-wrap;word-break:break-word;background:var(--bg-body);border:1px solid var(--border);padding:10px;border-radius:8px;color:var(--text-main);margin-top:8px;font-size:.8rem; max-height: 150px; overflow-y: auto;}
 
-    /* Calendar Styles */
-    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    /* Calendar Styles - Compacted */
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
     .calendar-header h4 { margin: 0; font-size: 1rem; font-weight: 600; }
-    .calendar-grid { display: grid; grid-template-columns: 24px repeat(7, 1fr); gap: 4px; text-align: center; font-size: 0.8rem; }
+    .calendar-grid { display: grid; grid-template-columns: 24px repeat(7, 1fr); gap: 2px; text-align: center; font-size: 0.8rem; }
     .cal-day-header { font-weight: 600; color: var(--text-muted); padding-bottom: 4px; font-size: 0.75rem; }
-    .cal-day { padding: 6px 0; border-radius: 4px; cursor: pointer; background: var(--bg-body); border: 1px solid var(--border); transition: all 0.2s; }
+    .cal-day { padding: 4px 0; border-radius: 4px; cursor: pointer; background: var(--bg-body); border: 1px solid var(--border); transition: all 0.2s; }
     .cal-day:hover { background: var(--bg-surface-hover); }
     .cal-day.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: bold; }
     .cal-day.today { border-color: var(--primary); color: var(--primary); font-weight: bold; }
     .cal-day.active.today { color: #fff; }
     .cal-day.other-month { opacity: 0.3; }
     .cal-week { font-size: 0.65rem; color: var(--text-muted); display: flex; align-items: center; justify-content: center; background: transparent; border: none; font-weight: 600; }
+
+    /* Compact Form inside Action Modal */
+    .action-right .form-grid { gap: 0.5rem; }
+    .action-right .form-group input, .action-right .form-group textarea { padding: 0.4rem; font-size: 0.85rem; }
+    .action-right .form-group label { margin-bottom: 0.2rem; }
 
     .context-menu{position:absolute;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);z-index:1000;
       min-width:160px;padding:5px;animation:fadeIn .1s}
@@ -222,7 +227,7 @@
         <span id="theme-icon">🌙</span> <span class="sidebar-text">Toggle Theme</span>
       </button>
       <div class="sidebar-text" style="margin-top: 15px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
-        v2.6.0 Enterprise
+        v2.6.1 Enterprise
       </div>
     </div>
   </aside>
@@ -348,7 +353,7 @@
             <div class="calendar-grid" id="calendar-grid"></div>
 
             <!-- Event Form -->
-            <div class="form-grid" style="gap: 0.5rem; margin-top: 0.5rem;">
+            <div class="form-grid" style="margin-top: 0.5rem;">
               <div class="form-group full">
                 <input type="text" id="evt-title" placeholder="Event Title (e.g. Call Contact)">
               </div>
@@ -433,6 +438,7 @@ const Utils = {
     return clean;
   },
 
+  // Kept for backward compatibility if needed elsewhere
   utf16to8: (str) => {
     str = String(str || '');
     let out = "", i = 0, len = str.length, c;
@@ -986,7 +992,7 @@ class App {
         tels: (c.tels || []).slice(0, 3), emails: (c.emails || []).slice(0, 2)
       };
       rawTextForDebug = VCardEngine.generateForQr(minimalC);
-      qrText = Utils.maybeUtf8ForQr(rawTextForDebug);
+      qrText = rawTextForDebug; // We will handle UTF-8 encoding safely in generateQRCodeSafe
 
       linkContainer.classList.remove('hidden');
       if (c.tels.length) {
@@ -1027,16 +1033,21 @@ class App {
   }
 
   generateQRCodeSafe(container, text) {
+    container.innerHTML = '';
     try {
-      new QRCode(container, { text: text, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+      // unescape(encodeURIComponent()) converts the string into a UTF-8 byte string.
+      // This perfectly aligns JS .length with the actual byte length, preventing the 
+      // "Data too large" calculation bug in qrcode.js when using non-ASCII characters (like 'ä').
+      const safeText = unescape(encodeURIComponent(text));
+      new QRCode(container, { text: safeText, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
     } catch (e) {
-      console.warn("QR Generation failed with level M, trying L", e);
+      console.warn("QR Generation failed with safeText, trying raw", e);
       try {
         container.innerHTML = '';
         new QRCode(container, { text: text, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
       } catch (e2) {
         console.error("QR Generation completely failed", e2);
-        container.innerHTML = '<div style="color:var(--danger);text-align:center;padding:20px;font-size:0.9rem;">Data too large for QR code</div>';
+        container.innerHTML = '<div style="color:var(--danger);text-align:center;padding:20px;font-size:0.9rem;">Data too large or contains unsupported characters.</div>';
       }
     }
   }
@@ -1349,7 +1360,8 @@ class App {
 
       if (this.state.columns.fn.visible) {
         let avatar = c.photo ? `<img src="${c.photo}" class="avatar">` : `<div class="avatar" style="background:${Utils.stringToColor(c.fn)}">${Utils.getInitials(c.fn)}</div>`;
-        html += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'phone')"><div class="contact-info">${avatar}<div class="contact-meta"><span style="font-weight:500">${Utils.escapeHtml(c.fn)}</span>${c.title ? `<span class="meta-sub">${Utils.escapeHtml(c.title)}</span>` : ''}</div></div></td>`;
+        // Removed .clickable-cell from name column, added inline cursor:pointer to prevent underline on hover
+        html += `<td style="cursor:pointer;" onclick="app.openActionModal('${c.id}', 'phone')"><div class="contact-info">${avatar}<div class="contact-meta"><span style="font-weight:500">${Utils.escapeHtml(c.fn)}</span>${c.title ? `<span class="meta-sub">${Utils.escapeHtml(c.title)}</span>` : ''}</div></div></td>`;
       }
       if (this.state.columns.tel.visible) html += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'phone')">${Utils.escapeHtml(c.tels[0]?.value || '')}</td>`;
       if (this.state.columns.email.visible) html += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'email')">${Utils.escapeHtml(c.emails[0]?.value || '')}</td>`;
@@ -1381,7 +1393,7 @@ class App {
       </td>`;
 
       tr.innerHTML = html;
-      tr.ondblclick = (e) => { if (!e.target.closest('.inline-editor') && !e.target.closest('.clickable-cell')) app.openModal(c.id); };
+      tr.ondblclick = (e) => { if (!e.target.closest('.inline-editor') && !e.target.closest('.clickable-cell') && !e.target.closest('td[style="cursor:pointer;"]')) app.openModal(c.id); };
       tbody.appendChild(tr);
     });
   }
