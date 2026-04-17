@@ -23,7 +23,16 @@
       --border:#e2e8f0; --text-main:#0f172a; --text-muted:#64748b;
       --shadow:0 4px 6px -1px rgba(0,0,0,.1); --glass:rgba(255,255,255,.8); --editor-bg:#fff;
     }
+    
     *{box-sizing:border-box;outline:none}
+    
+    /* Themed Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
     body{margin:0;font-family:'Inter',sans-serif;background:var(--bg-body);color:var(--text-main);height:100vh;display:flex;overflow:hidden;transition:background .3s,color .3s}
 
     #drop-zone{
@@ -134,11 +143,11 @@
     /* Action Modal Specifics */
     #action-modal-overlay .modal { width: 850px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column; }
     .action-body{padding:1.5rem; display:flex; flex-direction:column; gap:1rem; overflow-y:auto; flex: 1;}
-    .action-layout { display: flex; flex-direction: column; gap: 1rem; width: 100%; }
+    .action-layout { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; }
     @media (min-width: 768px) {
       .action-layout { flex-direction: row; }
       .action-left { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-      .action-right { flex: 1; display: flex; flex-direction: column; gap: 0.75rem; border-left: 1px solid var(--border); padding-left: 1.5rem; }
+      .action-right { flex: 1; display: flex; flex-direction: column; gap: 0.75rem; border-left: 1px solid var(--border); padding-left: 1.5rem; min-width: 0; }
     }
 
     .action-tabs{display:flex;gap:4px;background:var(--bg-body);padding:4px;border-radius:8px;width:100%}
@@ -227,7 +236,7 @@
         <span id="theme-icon">🌙</span> <span class="sidebar-text">Toggle Theme</span>
       </button>
       <div class="sidebar-text" style="margin-top: 15px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
-        v2.6.2 Enterprise
+        v2.6.3 Enterprise
       </div>
     </div>
   </aside>
@@ -344,10 +353,10 @@
           </div>
           
           <div class="action-right">
-            <!-- Notes Section (Moved to Top) -->
+            <!-- Notes Section (Moved to Top, Made Bigger) -->
             <div class="form-group full" style="margin-bottom: 0.5rem;">
               <label>Contact Notes</label>
-              <textarea id="action-note-input" rows="2" oninput="app.updateActionNote(this.value)" placeholder="Add notes here..."></textarea>
+              <textarea id="action-note-input" rows="4" style="min-height: 80px; resize: vertical;" oninput="app.updateActionNote(this.value)" placeholder="Add notes here..."></textarea>
             </div>
             
             <hr style="border:0; border-top:1px solid var(--border); margin: 0.5rem 0; width: 100%;">
@@ -583,6 +592,7 @@ class VCardEngine {
     if (fnRaw) lines.push(`FN:${fnRaw}`);
     if (org) lines.push(`ORG:${org}`);
     if (c.title) lines.push(`TITLE:${String(c.title).replace(/\r?\n/g,' ')}`);
+    if (c.note) lines.push(`NOTE:${String(c.note).replace(/\r?\n/g,'\\n')}`);
 
     const tels = Array.isArray(c.tels) ? c.tels : [];
     for (const t of tels) {
@@ -598,7 +608,8 @@ class VCardEngine {
     for (const e of emails) {
       const mail = String(e?.value || '').trim();
       if (!mail) continue;
-      lines.push(`EMAIL:${mail}`);
+      // Added ;INTERNET to ensure Android parsers pick up the email correctly
+      lines.push(`EMAIL;INTERNET:${mail}`);
     }
 
     lines.push('END:VCARD');
@@ -639,7 +650,7 @@ class VCardEngine {
         (c?.emails || []).forEach(e => {
           const mail = String(e?.value || '').trim();
           if (!mail) return;
-          vcf += `EMAIL:${mail}` + EOL;
+          vcf += `EMAIL;INTERNET:${mail}` + EOL;
         });
 
       } else {
@@ -964,9 +975,10 @@ class App {
     if (tab === 'contact') {
       const minimalC = {
         fn: c.fn || '', n: c.n || '', org: c.org || '', title: c.title || '',
-        tels: (c.tels || []).slice(0, 3), emails: (c.emails || []).slice(0, 2)
+        tels: (c.tels || []).slice(0, 3), emails: (c.emails || []).slice(0, 2),
+        note: c.note || ''
       };
-
+      
       linkContainer.classList.remove('hidden');
       if (c.tels.length) {
         linkContainer.innerHTML += `
@@ -1052,7 +1064,7 @@ class App {
       if (tryGenerate(asciiVcard, 'L', 'Attempt 3: ASCII-only vCard (Level L)')) {
         success = true; finalPayload = asciiVcard;
       }
-      // 4. Ultra-minimal vCard (Name + Phone only, Level L)
+      // 4. Ultra-minimal vCard (Name + Phone only, Level L) - Note stripped to save space
       else {
         let ultraMinimal = `BEGIN:VCARD\nVERSION:2.1\nFN:${payload.fn || ''}\nTEL:${payload.tels?.[0]?.value || ''}\nEND:VCARD`;
         let utf8Ultra = unescape(encodeURIComponent(ultraMinimal));
