@@ -54,11 +54,24 @@
       box-shadow:var(--shadow);transition:color .2s}
     .sidebar-toggle:hover{color:var(--primary)}
 
-    .logo{font-size:1.25rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:10px;margin-bottom:2rem;white-space:nowrap;overflow:hidden;height:30px}
+    .logo{font-size:1.25rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;white-space:nowrap;overflow:hidden;height:30px; flex-shrink: 0;}
     .logo span{color:var(--text-main)}
 
-    .sidebar-footer{margin-top:auto;border-top:1px solid var(--border);padding-top:1.5rem}
-    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem}
+    /* TODO List Styles */
+    .todo-container { flex: 1; overflow-y: auto; margin-bottom: 1rem; border-top: 1px solid var(--border); padding-top: 1rem; display: flex; flex-direction: column; gap: 6px; }
+    .todo-header { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 0.25rem; letter-spacing: 0.5px; flex-shrink: 0; }
+    .todo-item { display: flex; align-items: center; gap: 8px; padding: 6px; background: var(--bg-body); border: 1px solid var(--border); border-radius: 6px; cursor: grab; transition: border-color 0.2s; }
+    .todo-item:active { cursor: grabbing; }
+    .todo-item.drag-over { border-color: var(--primary); border-top-width: 2px; }
+    .todo-item .avatar { width: 24px; height: 24px; font-size: 0.6rem; }
+    .todo-item-name { flex: 1; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .todo-remove { cursor: pointer; color: var(--text-muted); padding: 2px 4px; border-radius: 4px; font-size: 0.8rem; }
+    .todo-remove:hover { color: var(--danger); background: rgba(239,68,68,0.1); }
+    .sidebar.collapsed .todo-header, .sidebar.collapsed .todo-item-name, .sidebar.collapsed .todo-remove { display: none; }
+    .sidebar.collapsed .todo-item { justify-content: center; padding: 6px 0; }
+
+    .sidebar-footer{margin-top:auto;border-top:1px solid var(--border);padding-top:1.5rem; flex-shrink: 0;}
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
     .stat-item{display:flex;flex-direction:column;align-items:center;background:var(--bg-body);padding:.5rem;border-radius:6px;border:1px solid var(--border)}
     .stat-val{font-weight:700;font-size:1.1rem}
     .stat-lbl{font-size:.65rem;color:var(--text-muted);text-transform:uppercase;margin-top:2px}
@@ -221,6 +234,9 @@
       <span>Nexus</span>
     </div>
 
+    <!-- TODO List Container -->
+    <div class="todo-container" id="todo-container"></div>
+
     <div class="sidebar-footer">
       <div class="sidebar-text">
         <div class="stats-grid">
@@ -238,8 +254,13 @@
       <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start;" id="theme-toggle">
         <span id="theme-icon">🌙</span> <span class="sidebar-text">Toggle Theme</span>
       </button>
+      
+      <button class="btn btn-secondary" style="width: 100%; justify-content: flex-start; margin-top: 8px;" id="autobackup-toggle" onclick="app.toggleAutoBackup()">
+        <span id="autobackup-icon">🔄</span> <span class="sidebar-text" id="autobackup-text">Auto Backup: ON</span>
+      </button>
+
       <div class="sidebar-text" style="margin-top: 15px; font-size: 0.7rem; color: var(--text-muted); text-align: center;">
-        v2.6.4 Enterprise
+        v2.7.0 Enterprise
       </div>
     </div>
   </aside>
@@ -272,6 +293,7 @@
   </main>
 
   <div id="column-context-menu" class="context-menu hidden"></div>
+  <div id="row-context-menu" class="context-menu hidden"></div>
 
   <div class="modal-backdrop" id="modal-overlay">
     <div class="modal">
@@ -703,6 +725,9 @@ class App {
       sort: { key: 'fn', dir: 'asc' },
       pagination: { page: 1, limit: 50 },
       theme: localStorage.getItem('theme') || 'dark',
+      todoList: JSON.parse(localStorage.getItem('todoList') || '[]'),
+      autoBackup: localStorage.getItem('autoBackup') !== 'false',
+      hasUnsavedChanges: false,
       columns: {
         fn: { label: 'Name', visible: true, locked: true },
         tel: { label: 'Phone', visible: true, locked: false },
@@ -720,6 +745,8 @@ class App {
       currentDate: new Date(),
       selectedDate: new Date()
     };
+    
+    this.idleTimeout = null;
 
     this.init();
   }
@@ -727,10 +754,13 @@ class App {
   init() {
     this.applyTheme();
     this.setupEventListeners();
+    this.setupIdleTimer();
+    this.updateAutoBackupUI();
     this.render();
 
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#column-context-menu')) document.getElementById('column-context-menu').classList.add('hidden');
+      if (!e.target.closest('#row-context-menu')) document.getElementById('row-context-menu').classList.add('hidden');
       if (!e.target.closest('#batch-actions-btn') && !e.target.closest('#batch-menu')) document.getElementById('batch-menu').classList.add('hidden');
       if (this.state.editingNoteId && !e.target.closest('.inline-editor') && !e.target.closest('.note-cell')) this.saveInlineEdit(this.state.editingNoteId);
     });
@@ -743,7 +773,12 @@ class App {
     document.body.appendChild(fileInput);
     fileInput.addEventListener('change', (e) => this.handleFile(e.target.files[0]));
 
-    window.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
+    window.addEventListener('dragover', (e) => { 
+      // Only show drop zone if dragging files, not internal elements
+      if (e.dataTransfer.types.includes('Files')) {
+        e.preventDefault(); dropZone.classList.add('active'); 
+      }
+    });
     dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('active'); });
     dropZone.addEventListener('drop', (e) => {
       e.preventDefault(); dropZone.classList.remove('active');
@@ -756,6 +791,200 @@ class App {
     });
   }
 
+  // --- Auto Backup & Idle Timer ---
+  setupIdleTimer() {
+    const reset = () => this.resetIdleTimer();
+    window.addEventListener('mousemove', reset);
+    window.addEventListener('keydown', reset);
+    window.addEventListener('click', reset);
+    window.addEventListener('scroll', reset, true);
+    this.resetIdleTimer();
+  }
+
+  resetIdleTimer() {
+    clearTimeout(this.idleTimeout);
+    this.idleTimeout = setTimeout(() => {
+      if (this.state.autoBackup && this.state.hasUnsavedChanges && this.state.contacts.length > 0) {
+        this.downloadVCF(this.state.contacts, true);
+        this.state.hasUnsavedChanges = false;
+      }
+    }, 60000); // 1 minute
+  }
+
+  markChanged() {
+    this.state.hasUnsavedChanges = true;
+    this.resetIdleTimer();
+  }
+
+  toggleAutoBackup() {
+    this.state.autoBackup = !this.state.autoBackup;
+    localStorage.setItem('autoBackup', this.state.autoBackup);
+    this.updateAutoBackupUI();
+    this.showToast(`Auto Backup ${this.state.autoBackup ? 'Enabled' : 'Disabled'}`, 'info');
+    if (this.state.autoBackup) this.resetIdleTimer();
+  }
+
+  updateAutoBackupUI() {
+    const btnText = document.getElementById('autobackup-text');
+    const btnIcon = document.getElementById('autobackup-icon');
+    const btn = document.getElementById('autobackup-toggle');
+    if (btnText && btnIcon && btn) {
+      btnText.textContent = `Auto Backup: ${this.state.autoBackup ? 'ON' : 'OFF'}`;
+      btnIcon.textContent = this.state.autoBackup ? '🔄' : '⏸️';
+      btn.style.color = this.state.autoBackup ? 'var(--success)' : 'var(--text-muted)';
+    }
+  }
+
+  // --- TODO List Logic ---
+  addToTodo(id) {
+    if (!this.state.todoList.includes(id)) {
+      this.state.todoList.push(id);
+      this.saveTodoList();
+      this.renderTodoList();
+      this.showToast('Added to TODO', 'success');
+    }
+  }
+
+  addSelectedToTodo() {
+    let added = 0;
+    this.state.selectedIds.forEach(id => {
+      if (!this.state.todoList.includes(id)) {
+        this.state.todoList.push(id);
+        added++;
+      }
+    });
+    if (added > 0) {
+      this.saveTodoList();
+      this.renderTodoList();
+      this.showToast(`Added ${added} contacts to TODO`, 'success');
+    }
+    this.toggleSelectionMode(false);
+  }
+
+  removeFromTodo(index) {
+    this.state.todoList.splice(index, 1);
+    this.saveTodoList();
+    this.renderTodoList();
+  }
+
+  saveTodoList() {
+    localStorage.setItem('todoList', JSON.stringify(this.state.todoList));
+  }
+
+  handleRowDragStart(e, id) {
+    e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'contact', id }));
+    e.dataTransfer.effectAllowed = 'copy';
+  }
+
+  handleTodoDragStart(e, index) {
+    e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'todo', index }));
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  handleTodoDragOver(e, index) {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+  }
+
+  handleTodoDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+  }
+
+  handleTodoDrop(e, dropIndex) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    e.stopPropagation();
+    
+    const data = e.dataTransfer.getData('text/plain');
+    if(!data) return;
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed.type === 'todo') {
+        const dragIndex = parsed.index;
+        if (dragIndex === dropIndex) return;
+        const item = this.state.todoList.splice(dragIndex, 1)[0];
+        this.state.todoList.splice(dropIndex, 0, item);
+        this.saveTodoList();
+        this.renderTodoList();
+      } else if (parsed.type === 'contact') {
+        if (this.state.todoList.includes(parsed.id)) {
+          this.state.todoList = this.state.todoList.filter(id => id !== parsed.id);
+        }
+        this.state.todoList.splice(dropIndex, 0, parsed.id);
+        this.saveTodoList();
+        this.renderTodoList();
+      }
+    } catch(err){}
+  }
+
+  renderTodoList() {
+    const container = document.getElementById('todo-container');
+    
+    // Clean up deleted contacts from TODO
+    this.state.todoList = this.state.todoList.filter(id => this.state.contacts.some(c => c.id === id));
+    
+    let html = `<div class="todo-header">Tasks (${this.state.todoList.length})</div>`;
+    
+    if (this.state.todoList.length === 0) {
+       html += `<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding: 10px 0; border: 1px dashed var(--border); border-radius: 6px;">Drag contacts here</div>`;
+    } else {
+       this.state.todoList.forEach((id, index) => {
+         const c = this.state.contacts.find(x => x.id === id);
+         if(!c) return;
+         let avatar = c.photo ? `<img src="${c.photo}" class="avatar">` : `<div class="avatar" style="background:${Utils.stringToColor(c.fn)}">${Utils.getInitials(c.fn)}</div>`;
+         html += `
+           <div class="todo-item" draggable="true" 
+                ondragstart="app.handleTodoDragStart(event, ${index})"
+                ondragover="app.handleTodoDragOver(event, ${index})"
+                ondragleave="app.handleTodoDragLeave(event)"
+                ondrop="app.handleTodoDrop(event, ${index})"
+                onclick="app.openActionModal('${c.id}', 'phone')">
+             ${avatar}
+             <div class="todo-item-name">${Utils.escapeHtml(c.fn)}</div>
+             <div class="todo-remove" onclick="event.stopPropagation(); app.removeFromTodo(${index})">✕</div>
+           </div>
+         `;
+       });
+    }
+    container.innerHTML = html;
+    
+    // Container drop zone (adds to end)
+    container.ondragover = (e) => {
+      if (e.dataTransfer.types.includes('text/plain')) e.preventDefault();
+    };
+    container.ondrop = (e) => {
+       e.preventDefault();
+       const data = e.dataTransfer.getData('text/plain');
+       if(!data) return;
+       try {
+         const parsed = JSON.parse(data);
+         if (parsed.type === 'contact') {
+           this.addToTodo(parsed.id);
+         }
+       } catch(err){}
+    };
+  }
+
+  showRowContextMenu(e, id) {
+    e.preventDefault();
+    const menu = document.getElementById('row-context-menu');
+    menu.innerHTML = `
+      <div class="context-menu-item" onclick="app.addToTodo('${id}'); document.getElementById('row-context-menu').classList.add('hidden');">
+        📌 Add to TODO
+      </div>
+      <div class="context-menu-item" onclick="app.openModal('${id}'); document.getElementById('row-context-menu').classList.add('hidden');">
+        ✏️ Edit Contact
+      </div>
+      <div class="context-menu-item" style="color:var(--danger)" onclick="app.deleteContact('${id}'); document.getElementById('row-context-menu').classList.add('hidden');">
+        🗑️ Delete Contact
+      </div>
+    `;
+    menu.style.left = e.clientX + 'px';
+    menu.style.top = e.clientY + 'px';
+    menu.classList.remove('hidden');
+  }
+
+  // --- Core Logic ---
   handleFile(file) {
     if (!file) return;
     const reader = new FileReader();
@@ -764,6 +993,7 @@ class App {
         const newContacts = VCardEngine.parse(e.target.result);
         if (newContacts.length === 0) throw new Error("No contacts found");
         this.state.contacts = [...this.state.contacts, ...newContacts];
+        this.markChanged();
         this.showToast(`Imported ${newContacts.length} contacts`, 'success');
         this.refreshData();
       } catch (err) {
@@ -810,52 +1040,10 @@ class App {
     const searchVal = document.getElementById('search-input')?.value || '';
     if (searchVal) this.handleSearch(searchVal);
     else { this.sortData(); this.render(); }
+    this.renderTodoList();
   }
 
   toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
-
-  showColumnContextMenu(x, y) {
-    const menu = document.getElementById('column-context-menu');
-    menu.innerHTML = '';
-    Object.entries(this.state.columns).forEach(([key, col]) => {
-      if (col.locked) return;
-      const item = document.createElement('div');
-      item.className = 'context-menu-item';
-      item.innerHTML = `<input type="checkbox" ${col.visible ? 'checked' : ''}> ${col.label}`;
-      item.onclick = (e) => {
-        e.stopPropagation();
-        this.state.columns[key].visible = !this.state.columns[key].visible;
-        this.renderTable();
-      };
-      menu.appendChild(item);
-    });
-    menu.style.left = x + 'px'; menu.style.top = y + 'px'; menu.classList.remove('hidden');
-  }
-
-  toggleSelectionMode(active) {
-    this.state.isSelectionMode = active;
-    if (!active) this.state.selectedIds.clear();
-    this.renderToolbar();
-    this.renderTable();
-  }
-
-  toggleSelectAll() {
-    if (this.state.selectedIds.size === this.state.filteredContacts.length) this.state.selectedIds.clear();
-    else this.state.filteredContacts.forEach(c => this.state.selectedIds.add(c.id));
-    this.renderTable();
-    this.updateBatchButton();
-  }
-
-  toggleSelection(id) {
-    if (this.state.selectedIds.has(id)) this.state.selectedIds.delete(id);
-    else this.state.selectedIds.add(id);
-    this.updateBatchButton();
-  }
-
-  updateBatchButton() {
-    const btn = document.getElementById('batch-actions-btn');
-    if (btn && this.state.isSelectionMode) btn.textContent = `Actions (${this.state.selectedIds.size}) ▾`;
-  }
 
   toggleBatchMenu() {
     const menu = document.getElementById('batch-menu');
@@ -869,6 +1057,12 @@ class App {
     menu.appendChild(itemExportAll);
 
     if (this.state.isSelectionMode && this.state.selectedIds.size > 0) {
+      const itemTodoSel = document.createElement('div');
+      itemTodoSel.className = 'context-menu-item';
+      itemTodoSel.innerHTML = `📌 Add Selected to TODO (${this.state.selectedIds.size})`;
+      itemTodoSel.onclick = () => { this.addSelectedToTodo(); menu.classList.add('hidden'); };
+      menu.appendChild(itemTodoSel);
+
       const itemExpSel = document.createElement('div');
       itemExpSel.className = 'context-menu-item';
       itemExpSel.innerHTML = `📥 Export Selected (${this.state.selectedIds.size})`;
@@ -888,6 +1082,7 @@ class App {
     if (!confirm(`Delete ${this.state.selectedIds.size} contacts?`)) return;
     this.state.contacts = this.state.contacts.filter(c => !this.state.selectedIds.has(c.id));
     this.state.selectedIds.clear();
+    this.markChanged();
     this.toggleSelectionMode(false);
     this.refreshData();
     this.showToast('Contacts deleted', 'success');
@@ -899,29 +1094,16 @@ class App {
   }
   exportAll() { this.downloadVCF(this.state.filteredContacts); }
 
-  startInlineEdit(id) {
-    if (this.state.editingNoteId === id) return;
-    if (this.state.editingNoteId) this.saveInlineEdit(this.state.editingNoteId);
-    this.state.editingNoteId = id;
-    this.renderTable();
-    setTimeout(() => {
-      const el = document.getElementById(`note-edit-${id}`);
-      if (el) {
-        el.focus();
-        el.setSelectionRange(el.value.length, el.value.length);
-        el.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.saveInlineEdit(id); }
-        });
-      }
-    }, 50);
-  }
-
   saveInlineEdit(id) {
     const el = document.getElementById(`note-edit-${id}`);
     if (!el) { this.state.editingNoteId = null; return; }
     const val = el.value;
     const c = this.state.contacts.find(x => x.id === id);
-    if (c && c.note !== val) { c.note = val; this.showToast('Note saved', 'success'); }
+    if (c && c.note !== val) { 
+      c.note = val; 
+      this.markChanged();
+      this.showToast('Note saved', 'success'); 
+    }
     this.state.editingNoteId = null;
     this.renderTable();
   }
@@ -932,7 +1114,6 @@ class App {
     if (!c) return;
     this.state.activeActionContact = c;
     
-    // Reset Calendar to today
     this.calendarState.currentDate = new Date();
     this.calendarState.selectedDate = new Date();
     
@@ -945,7 +1126,6 @@ class App {
 
     this.switchActionTab(possibleTabs.has(initialTab) ? initialTab : 'contact');
     
-    // Initialize Calendar & Form
     this.renderCalendar();
     document.getElementById('evt-title').value = `Call ${c.fn}`;
     document.getElementById('action-note-input').value = c.note || '';
@@ -1005,7 +1185,6 @@ class App {
         </details>
       `;
 
-      // Trigger multi-tier fallback generation
       this.generateQRCodeSafe(qrContainer, minimalC, 'vcard', document.getElementById('qr-debug-log'));
 
     } else if (tab === 'phone') {
@@ -1051,18 +1230,15 @@ class App {
       }
     };
 
-    // 1. Full Minimal vCard (UTF-8, Level M)
     let vcardFull = VCardEngine.generateForQr(payload);
     let utf8Vcard = unescape(encodeURIComponent(vcardFull));
     
     if (tryGenerate(utf8Vcard, 'M', 'Attempt 1: Full Minimal vCard (UTF-8, Level M)')) {
       success = true; finalPayload = vcardFull;
     } 
-    // 2. Full Minimal vCard (UTF-8, Level L)
     else if (tryGenerate(utf8Vcard, 'L', 'Attempt 2: Full Minimal vCard (UTF-8, Level L)')) {
       success = true; finalPayload = vcardFull;
     }
-    // 3. Transliterated vCard (Level L) - Replace Swedish/Nordic chars
     else {
       const transliterate = (str) => {
         const map = { 'å':'a', 'ä':'a', 'ö':'o', 'Å':'A', 'Ä':'A', 'Ö':'O', 'é':'e', 'è':'e', 'ü':'u', 'æ':'a', 'ø':'o', 'Æ':'A', 'Ø':'O' };
@@ -1073,20 +1249,17 @@ class App {
       if (tryGenerate(utf8Trans, 'L', 'Attempt 3: Transliterated vCard (Level L)')) {
         success = true; finalPayload = transVcard;
       }
-      // 4. ASCII-only vCard (Level L) - Strips special chars that break qrcode.js byte counter
       else {
         let asciiVcard = vcardFull.replace(/[^\x00-\x7F]/g, '');
         if (tryGenerate(asciiVcard, 'L', 'Attempt 4: ASCII-only vCard (Level L)')) {
           success = true; finalPayload = asciiVcard;
         }
-        // 5. Ultra-minimal vCard (Name + Phone only, Level L) - Note stripped to save space
         else {
           let ultraMinimal = `BEGIN:VCARD\nVERSION:2.1\nFN:${payload.fn || ''}\nTEL:${payload.tels?.[0]?.value || ''}\nEND:VCARD`;
           let utf8Ultra = unescape(encodeURIComponent(ultraMinimal));
           if (tryGenerate(utf8Ultra, 'L', 'Attempt 5: Ultra-minimal vCard (UTF-8, Level L)')) {
             success = true; finalPayload = ultraMinimal;
           }
-          // 6. MECARD format (Extremely compact, native iOS/Android support)
           else {
             let mecard = `MECARD:N:${payload.fn || ''};TEL:${payload.tels?.[0]?.value || ''};EMAIL:${payload.emails?.[0]?.value || ''};;`;
             let utf8Mecard = unescape(encodeURIComponent(mecard));
@@ -1225,12 +1398,12 @@ class App {
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
-    // Append to notes
     const shortDate = selDate.toISOString().slice(0,10);
     const noteAppend = `[Task: ${shortDate} - ${title}]`;
     const c = this.state.activeActionContact;
     c.note = (c.note ? c.note.trim() + '\n' : '') + noteAppend;
     document.getElementById('action-note-input').value = c.note;
+    this.markChanged();
     this.renderTable();
     this.showToast('Event exported & note added', 'success');
   }
@@ -1238,6 +1411,7 @@ class App {
   updateActionNote(val) {
     if (this.state.activeActionContact) {
       this.state.activeActionContact.note = val;
+      this.markChanged();
       this.renderTable();
     }
   }
@@ -1328,6 +1502,7 @@ class App {
       contactData.photo = null;
       this.state.contacts.unshift(contactData);
     }
+    this.markChanged();
     this.closeModal();
     this.refreshData();
     this.showToast('Contact saved', 'success');
@@ -1336,6 +1511,7 @@ class App {
   deleteContact(id) {
     if (confirm('Delete contact?')) {
       this.state.contacts = this.state.contacts.filter(c => c.id !== id);
+      this.markChanged();
       this.refreshData();
       this.showToast('Deleted', 'success');
     }
@@ -1352,6 +1528,7 @@ class App {
 
     this.renderToolbar();
     if (hasContacts) this.renderTable();
+    this.renderTodoList();
   }
 
   renderToolbar() {
@@ -1407,6 +1584,9 @@ class App {
 
     pageData.forEach(c => {
       const tr = document.createElement('tr');
+      tr.draggable = true;
+      tr.ondragstart = (e) => this.handleRowDragStart(e, c.id);
+      tr.oncontextmenu = (e) => this.showRowContextMenu(e, c.id);
 
       let html = '';
       if (this.state.isSelectionMode) {
@@ -1416,7 +1596,6 @@ class App {
 
       if (this.state.columns.fn.visible) {
         let avatar = c.photo ? `<img src="${c.photo}" class="avatar">` : `<div class="avatar" style="background:${Utils.stringToColor(c.fn)}">${Utils.getInitials(c.fn)}</div>`;
-        // Removed .clickable-cell from name column, added inline cursor:pointer to prevent underline on hover
         html += `<td style="cursor:pointer;" onclick="app.openActionModal('${c.id}', 'phone')"><div class="contact-info">${avatar}<div class="contact-meta"><span style="font-weight:500">${Utils.escapeHtml(c.fn)}</span>${c.title ? `<span class="meta-sub">${Utils.escapeHtml(c.title)}</span>` : ''}</div></div></td>`;
       }
       if (this.state.columns.tel.visible) html += `<td class="clickable-cell" onclick="app.openActionModal('${c.id}', 'phone')">${Utils.escapeHtml(c.tels[0]?.value || '')}</td>`;
@@ -1465,18 +1644,21 @@ class App {
     }
   }
 
-  downloadVCF(contacts) {
+  downloadVCF(contacts, isAuto = false) {
     if (!contacts.length) return;
     const vcfContent = VCardEngine.generate(contacts, false, { version: VCARD_DEFAULT_VERSION, eol: '\r\n' });
     const blob = new Blob([vcfContent], { type: 'text/x-vcard;charset=utf-8' });
     const now = new Date();
-    const filename = `Nexus_Export_${now.toISOString().slice(0,10)}_${contacts.length}-contacts.vcf`;
+    const prefix = isAuto ? 'Nexus_AutoBackup_' : 'Nexus_Export_';
+    const filename = `${prefix}${now.toISOString().slice(0,10)}_${contacts.length}-contacts.vcf`;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = filename;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    this.showToast('Export started', 'success');
+    
+    if (isAuto) this.showToast('Auto-backup downloaded', 'success');
+    else this.showToast('Export started', 'success');
   }
 
   applyTheme() {
